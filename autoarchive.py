@@ -6,6 +6,7 @@ from collections import deque
 import os
 import uuid
 import shutil
+import datetime
 
 
 def error(msg):
@@ -27,7 +28,11 @@ def warning(msg):
     sys.stderr.write('WARNING: {}'.format(msg))
 
 
-class ConversionException(Exception):
+class FfmpegException(Exception):
+    pass
+
+
+class RunExecException(Exception):
     pass
 
 
@@ -47,6 +52,8 @@ class Application:
         self.profile = None
         self.input_path = ''
         self.output_dir = ''
+        self.simulate = False
+        self.dir_depth = 0
 
     def _read_config(self):
         self._info('Reading configuration file')
@@ -95,6 +102,10 @@ class Application:
         self._read_profile()
         self._read_input_path()
         self._read_output_dir()
+        self.simulate = self.args.simulate
+        self.dir_depth = self.args.dir_depth
+        if self.simulate:
+            self._log('--- THIS IS A SIMULATION. NO CHANGES WILL BE MADE ---')
         if os.path.isfile(self.input_path):
             self._run_file()
         else:
@@ -159,20 +170,31 @@ class Application:
         self._info('Checking file extension')
         name, ext = os.path.splitext(os.path.split(self.input_path)[1])
         ext = ext.lower()
-        allowed_exts = self.profile['input']['allowed_extensions']
+        allowed_exts = [e.lower() for e in self.profile['input']['allowed_extensions']]
         if ext not in allowed_exts:
             error('Wrong input file extension: "{}". Profile requires: {}.'.format(ext, allowed_exts))
+        try:
+            self._run_exec(self.input_path, self.output_dir)
+        except RunExecException as e:
+            error(str(e))
+
+    def _run_dir(self):
+        self._info('Building file list')
+        file_list = self._build_file_list()
+
+    def _run_exec(self, input_path, output_dir):
+        name = os.path.splitext(os.path.split(input_path)[1])[0]
         self._info('Building command')
-        args = [self.ffmpeg_path, '-hide_banner', '-n', '-nostdin', '-i', self.input_path]
+        args = [self.ffmpeg_path, '-hide_banner', '-n', '-nostdin', '-i', input_path]
         tmp_paths = []
         output_mapping = {}
         tmp_name = uuid.uuid4()
         for o in self.profile['outputs']:
             args.extend(o['parameters'])
             tp = os.path.join(self.temp_dir, '{}{}'.format(tmp_name, o['extension']))
-            op = os.path.join(self.output_dir, '{}{}'.format(name, o['extension']))
+            op = os.path.join(output_dir, '{}{}'.format(name, o['extension']))
             if os.path.exists(op):
-                error('Output file "{}" already exists.'.format(op))
+                raise RunExecException('Output file "{}" already exists.'.format(op))
             output_mapping[tp] = op
             tmp_paths.append(tp)
             args.append(tp)
@@ -183,58 +205,73 @@ class Application:
             else:
                 args_info.append(a)
         self._info('Starting {}'.format(' '.join(args_info)))
-        conv_log = deque(maxlen=5)
-        conv_exception = None
-        self._hook_pre_start()
-        proc = subprocess.Popen(args, stderr=subprocess.PIPE, universal_newlines=True)
-        self._hook_post_start()
-        try:
-            for line in proc.stderr:
-                conv_log.append(line)
-                if line.startswith('frame='):
-                    p = line.find('fps=')
-                    try:
-                        frame = int(line[6:p].strip())
-                    except ValueError as e:
-                        raise ConversionException('Unable to determine conversion progress.') from e
-                    self._progress_callback(frame)
-        except ConversionException as e:
-            proc.terminate()
-            conv_exception = e
-        except:
-            proc.terminate()
-            raise
-        finally:
-            proc.wait()
-            return_code = proc.returncode
-            if return_code != 0:
-                self._error_callback(return_code, conv_log, conv_exception, tmp_paths)
-            else:
-                self._success_callback(output_mapping)
+        if self.simulate:
+            self._success_callback(output_mapping)
+        else:
+            conv_log = deque(maxlen=5)
+            conv_exception = None
+            self._hook_pre_start()
+            proc = subprocess.Popen(args, stderr=subprocess.PIPE, universal_newlines=True)
+            start_time = datetime.datetime.now()
+            self._log('ffmpeg process started at {}'.format(start_time))
+            self._hook_post_start()
+            try:
+                for line in proc.stderr:
+                    conv_log.append(line)
+                    if line.startswith('frame='):
+                        p = line.find('fps=')
+                        try:
+                            frame = int(line[6:p].strip())
+                        except ValueError as e:
+                            raise FfmpegException('Unable to determine conversion progress.') from e
+                        self._progress_callback(frame)
+            except FfmpegException as e:
+                proc.terminate()
+                conv_exception = e
+            except:
+                proc.terminate()
+                raise
+            finally:
+                proc.wait()
+                end_time = datetime.datetime.now()
+                self._log('ffmpeg process finished. Elapsed time: {}'.format(end_time - start_time))
+                return_code = proc.returncode
+                if return_code != 0:
+                    self._error_callback(return_code, conv_log, conv_exception, tmp_paths)
+                else:
+                    self._success_callback(output_mapping)
 
-    def _run_dir(self):
-        pass
+    def _build_file_list(self):
+        file_list = []
+        root_len = len(self.input_path)
+        allowed_exts = [e.lower() for e in self.profile['input']['allowed_extensions']]
+        for path, dirs, files in os.walk(self.input_path):
+            files_allowed = [f for f in files if os.path.splitext(f)[1].lower() in allowed_exts]
+            if len(files_allowed) > 0:
+                file_list.append({'dir': path[root_len + 1:], 'files': files_allowed})
+        return file_list
 
     def _progress_callback(self, frame):
         self._info('Processed {} frames'.format(frame))
         self._hook_progress(frame)
 
     def _error_callback(self, return_code, conv_log, conv_exception, tmp_paths):
-        self._info('Removing temporary files...')
+        self._info('Removing temporary files')
         for tp in tmp_paths:
             if os.path.exists(tp):
                 os.remove(tp)
-        error(
-            'ffmpeg process finished with exit code {}.\r\nLast output:\r\n{}\r\nRaised exception: {}'.format(
+        raise RunExecException(
+            'Exit code {}.\r\nLast output:\r\n{}\r\nRaised exception: {}'.format(
                 return_code, '\r\n'.join(conv_log), conv_exception
             )
         )
 
     def _success_callback(self, output_mapping):
-        self._info('ffmpeg process finished with exit code 0')
         self._info('Output mappings: {}'.format(output_mapping))
-        self._hook_success()
-        self._move_from_temp(output_mapping)
+        if not self.simulate:
+            self._hook_success()
+            self._move_from_temp(output_mapping)
+        self._log('Done')
 
     def _move_from_temp(self, output_mapping):
         self._info('Moving files from temporary dir')
@@ -247,7 +284,6 @@ class Application:
                 op = os.path.join(head, '{}.{}{}'.format(name, uuid.uuid4(), ext))
             shutil.move(tp, op)
         self._hook_post_move(output_mapping)
-        self._info('All done!')
 
     def _hook_pre_start(self):
         pass
@@ -282,5 +318,17 @@ if __name__ == '__main__':
     parser_run.add_argument('in_path', help="path to input file or directory")
     parser_run.add_argument('out_path', help="path to output directory")
     parser_run.add_argument('profile', help="conversion profile's name")
+    parser_run.add_argument(
+        '-dd', '--dirdepth',
+        dest='dir_depth',
+        help="directory structure depth in output folder",
+        type=int,
+        default=0
+    )
+    parser_run.add_argument(
+        '-s', '--simulate',
+        help="simulate run without using ffmpeg",
+        action='store_true'
+    )
     app = Application(os.path.dirname(os.path.realpath(__file__)), parser.parse_args())
     app.exec()
