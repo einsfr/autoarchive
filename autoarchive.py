@@ -8,6 +8,8 @@ import uuid
 import shutil
 import datetime
 
+VERSION = '1.0b'
+
 
 def error(msg):
     sys.stderr.write('ERROR: {}'.format(msg))
@@ -179,13 +181,57 @@ class Application:
             error(str(e))
 
     def _run_dir(self):
+        start_time = datetime.datetime.now()
         self._info('Building file list')
         file_list = self._build_file_list()
+        dir_count = len(file_list)
+        file_count = 0
+        for f in file_list:
+            file_count += len(f['files'])
+        self._info('Found {} file(s) in {} directory(ies).'.format(file_count, dir_count))
+        file_counter = 0
+        errors_counter = 0
+        for f in file_list:
+            if self.dir_depth > 0:
+                path = f['dir']
+                path_list = []
+                while True:
+                    head, tail = os.path.split(path)
+                    path = head
+                    if tail:
+                        path_list.append(tail)
+                    if not head:
+                        break
+                if len(path_list) == 0:
+                    output_dir = self.output_dir
+                else:
+                    if len(path_list) < self.dir_depth:
+                        output_dir = os.path.join(self.output_dir, *path_list[::-1])
+                    else:
+                        output_dir = os.path.join(self.output_dir, *path_list[:-self.dir_depth - 1:-1])
+                    if not self.simulate:
+                        os.makedirs(output_dir, exist_ok=True)
+            else:
+                output_dir = self.output_dir
+            for file in f['files']:
+                input_path = os.path.join(self.input_path, f['dir'], file)
+                file_counter += 1
+                self._log('Processing file {} of {}: "{}"'.format(file_counter, file_count, input_path))
+                try:
+                    self._run_exec(input_path, output_dir)
+                except RunExecException as e:
+                    errors_counter += 1
+                    warning(str(e))
+        if errors_counter:
+            warning('Finished with {} error(s)'.format(errors_counter))
+        else:
+            self._log('Finished without errors')
+        self._log('Elapsed time: {}'.format(datetime.datetime.now() - start_time))
 
     def _run_exec(self, input_path, output_dir):
         name = os.path.splitext(os.path.split(input_path)[1])[0]
         self._info('Building command')
-        args = [self.ffmpeg_path, '-hide_banner', '-n', '-nostdin', '-i', input_path]
+        args = [self.ffmpeg_path, '-hide_banner', '-n', '-nostdin', '-loglevel', 'warning', '-stats', '-i', input_path]
         tmp_paths = []
         output_mapping = {}
         tmp_name = uuid.uuid4()
@@ -228,9 +274,9 @@ class Application:
             except FfmpegException as e:
                 proc.terminate()
                 conv_exception = e
-            except:
+            except Exception as e:
                 proc.terminate()
-                raise
+                error(str(e))
             finally:
                 proc.wait()
                 end_time = datetime.datetime.now()
