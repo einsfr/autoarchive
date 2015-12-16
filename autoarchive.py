@@ -219,6 +219,8 @@ class Application:
                         os.makedirs(output_dir, exist_ok=True)
             else:
                 output_dir = output_base_dir
+                if not self.simulate:
+                    os.makedirs(output_dir, exist_ok=True)
             for file in f['files']:
                 input_path = os.path.join(self.input_path, f['dir'], file)
                 file_counter += 1
