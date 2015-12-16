@@ -56,6 +56,7 @@ class Application:
         self.output_dir = ''
         self.simulate = False
         self.dir_depth = 0
+        self.create_dir = False
 
     def _read_config(self):
         self._info('Reading configuration file')
@@ -106,6 +107,7 @@ class Application:
         self._read_output_dir()
         self.simulate = self.args.simulate
         self.dir_depth = self.args.dir_depth
+        self.create_dir = self.args.create_dir
         if self.simulate:
             self._log('--- THIS IS A SIMULATION. NO CHANGES WILL BE MADE ---')
         if os.path.isfile(self.input_path):
@@ -181,6 +183,10 @@ class Application:
             error(str(e))
 
     def _run_dir(self):
+        if self.create_dir:
+            output_base_dir = os.path.join(self.output_dir, os.path.split(self.input_path)[1])
+        else:
+            output_base_dir = self.output_dir
         start_time = datetime.datetime.now()
         self._info('Building file list')
         file_list = self._build_file_list()
@@ -203,16 +209,16 @@ class Application:
                     if not head:
                         break
                 if len(path_list) == 0:
-                    output_dir = self.output_dir
+                    output_dir = output_base_dir
                 else:
                     if len(path_list) < self.dir_depth:
-                        output_dir = os.path.join(self.output_dir, *path_list[::-1])
+                        output_dir = os.path.join(output_base_dir, *path_list[::-1])
                     else:
-                        output_dir = os.path.join(self.output_dir, *path_list[:-self.dir_depth - 1:-1])
+                        output_dir = os.path.join(output_base_dir, *path_list[:-self.dir_depth - 1:-1])
                     if not self.simulate:
                         os.makedirs(output_dir, exist_ok=True)
             else:
-                output_dir = self.output_dir
+                output_dir = output_base_dir
             for file in f['files']:
                 input_path = os.path.join(self.input_path, f['dir'], file)
                 file_counter += 1
@@ -374,6 +380,12 @@ if __name__ == '__main__':
     parser_run.add_argument(
         '-s', '--simulate',
         help="simulate run without using ffmpeg",
+        action='store_true'
+    )
+    parser_run.add_argument(
+        '-c', '--createdir',
+        dest='create_dir',
+        help="create input dir (if it's a dir) in output folder",
         action='store_true'
     )
     app = Application(os.path.dirname(os.path.realpath(__file__)), parser.parse_args())
