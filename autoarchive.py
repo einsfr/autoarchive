@@ -94,7 +94,7 @@ class Application:
         self.output_dir = os.path.normpath(self.args.out_path)
         self._info('Checking output path')
         if not os.path.isdir(self.output_dir):
-            error('Output path "{}" is not an existing directory.')
+            error('Output path "{}" is not an existing directory.'.format(self.output_dir))
 
     def exec(self):
         if self.command == 'run':
@@ -162,7 +162,7 @@ class Application:
                 if rp not in o:
                     error('Required output "{}" parameter "{}" is missing.'.format(k, rp))
             if type(o['parameters']) != list:
-                error('Output "{}" "parameters" must be an array.')
+                error('Output "{}" "parameters" must be an array.'.format(k))
             extensions.append(str(o['extension']).lower())
         if len(set(extensions)) < len(extensions):
             error('All output extensions must be unique.')
