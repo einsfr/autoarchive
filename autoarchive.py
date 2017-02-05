@@ -16,7 +16,7 @@ def configure_logger(log_dir: str, log_split: bool, log_level: str, verbosity: s
         file_mode = 'a'
     logging.basicConfig(
         level=getattr(logging, log_level),
-        format='%(asctime)s %(levelname)-8s %(message)s',
+        format='%(process)-6d %(asctime)s %(levelname)-8s %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
         filename=log_file,
         filemode=file_mode
@@ -38,3 +38,4 @@ if __name__ == '__main__':
     except Exception as e:
         logging.critical(str(e))
         sys.exit(1)
+    logging.info('All done - terminating')

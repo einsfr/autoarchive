@@ -30,10 +30,10 @@ def _validate_configuration(json_content: dict) -> dict:
                     'Path in configuration parameter {} "{}" is not a directory.'.format(p, json_content[p])
                 )
 
-    params = ['ffmpeg_path', 'temp_dir', 'out_dir', 'log_dir', ]
+    params = ['ffmpeg_path', 'ffprobe_path', 'temp_dir', 'out_dir', 'log_dir', ]
 
     _required(params)
-    _is_a_file(['ffmpeg_path', ])
+    _is_a_file(['ffmpeg_path', 'ffprobe_path', ])
     _is_a_dir(['temp_dir', 'out_dir', 'log_dir', ])
 
     return dict([(k, json_content[k]) for k in params])

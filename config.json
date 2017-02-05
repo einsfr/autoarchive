@@ -1,7 +1,7 @@
 {
-  "ffmpeg_path": "E:\\ffmpeg-3.2-win64-static\\bin\\ffmpeg.exe",
+  "ffmpeg_path": "D:\\ffmpeg-3.2.2-win64-static\\bin\\ffmpeg.exe",
+  "ffprobe_path": "D:\\ffmpeg-3.2.2-win64-static\\bin\\ffprobe.exe",
   "temp_dir": "D:\\Temp",
-  "out_dir": "E:\\Output",
-  "log_dir": "E:\\Output",
-
+  "out_dir": "D:\\Temp",
+  "log_dir": "D:\\Temp"
 }

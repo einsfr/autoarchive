@@ -7,27 +7,33 @@ import subprocess
 from collections import deque
 from datetime import datetime
 
-
-class FFmpegProcessException(Exception):
-    pass
+from ffmpeg.exceptions import FFmpegProcessException, FFmpegBinaryNotFound
 
 
-class RunCommandException(Exception):
-    pass
+TRADEMARK_NOTE = 'FFmpeg is a trademark of Fabrice Bellard <http://www.bellard.org/>, originator of the FFmpeg project.'
 
 
-class FFmpegWrapper:
+class FFmpegBaseCommand:
 
     DEFAULT_GENERAL_ARGS = ['-hide_banner', '-n', '-nostdin', '-loglevel', 'warning', '-stats']
 
     def __init__(self, bin_path: str, tmp_dir: str):
+        bin_path = os.path.abspath(bin_path)
         if not (os.path.isfile(bin_path) and os.access(bin_path, os.X_OK)):
-            raise FileNotFoundError('FFmpeg binary not found: "{}"'.format(bin_path))
+            msg = 'FFmpeg binary not found: "{}"'.format(bin_path)
+            logging.critical(msg)
+            raise FFmpegBinaryNotFound(msg)
         self._bin_path = bin_path
         self._tmp_dir = os.path.abspath(tmp_dir)
 
+    def exec(self, *args, **kwargs):
+        logging.info(TRADEMARK_NOTE)
+
+
+class FFmpegConvert(FFmpegBaseCommand):
+
     @staticmethod
-    def _run_success_callback(output_mapping: list, simulate: bool) -> None:
+    def _success_callback(output_mapping: list, simulate: bool) -> None:
         if not simulate:
             logging.info('Moving file from temporary directory...')
             for tmp_path, out_path in output_mapping:
@@ -49,25 +55,26 @@ class FFmpegWrapper:
         logging.info('Done!')
 
     @staticmethod
-    def _run_progress_callback(frame: int) -> None:
+    def _progress_callback(frame: int) -> None:
         logging.debug('Processed {} frames'.format(frame))
 
     @staticmethod
-    def _run_error_callback(return_code: int, proc_log: deque, proc_exception: Exception, tmp_paths: list) -> None:
+    def _error_callback(return_code: int, proc_log: deque, proc_exception: Exception, tmp_paths: list) -> None:
         logging.info('Removing temporary files...')
         for t in tmp_paths:
             if os.path.exists(t):
                 logging.debug('Found: "{}" - removing...')
                 os.remove(t)
-        raise RunCommandException(
+        raise FFmpegProcessException(
             'Exit code {}.\r\nLast output:\r\n{}\r\nRaised exception: {}'.format(
                 return_code, '\r\n'.join(proc_log), proc_exception
             )
         )
 
-    def run(self, inputs: list, outputs: list, general_args: list=DEFAULT_GENERAL_ARGS, simulate: bool=False) -> None:
-        if simulate:
-            logging.info('--- THIS IS A SIMULATION. NO CHANGES WILL BE MADE ---')
+    def exec(self, inputs: list, outputs: list, general_args: list=None, simulate: bool=False) -> None:
+        super().exec()
+        if general_args is None:
+            general_args = self.__class__.DEFAULT_GENERAL_ARGS
         logging.info('Building FFmpeg command...')
         args = [self._bin_path]
         logging.debug('General args: {}'.format(general_args))
@@ -77,7 +84,9 @@ class FFmpegWrapper:
         for i in inputs:
             in_args, in_url = i
             if not os.path.isfile(in_url):
-                raise FileNotFoundError('Input file not found: "{}"'.format(in_url))
+                msg = 'Input file not found: "{}"'.format(in_url)
+                logging.error(msg)
+                raise FileNotFoundError(msg)
             in_args.append('i')
             in_args.append(in_url)
             logging.debug('Extending args with {}'.format(in_args))
@@ -88,7 +97,9 @@ class FFmpegWrapper:
         for o in outputs:
             out_args, out_path = o
             if os.path.exists(out_path):
-                raise FileExistsError('Output file "{}" already exists'.format(out_path))
+                msg = 'Output file "{}" already exists'.format(out_path)
+                logging.error(msg)
+                raise FileExistsError(msg)
             tmp_path = os.path.join(self._tmp_dir, uuid.uuid4())
             output_mapping.append((out_path, tmp_path))
             out_args.append(tmp_path)
@@ -98,7 +109,7 @@ class FFmpegWrapper:
 
         logging.info('Starting {}'.format(' '.join(args)))
         if simulate:
-            self._run_success_callback(output_mapping, True)
+            self._success_callback(output_mapping, True)
             return
 
         proc_log = deque(maxlen=5)
@@ -107,16 +118,20 @@ class FFmpegWrapper:
         proc_start_time = datetime.now()
         logging.info('FFmpeg process started at {}'.format(proc_start_time))
 
+        ignoring_progress = False
         try:
             for line in proc.stderr:
                 proc_log.append(line)
-                if line.startswith('frame='):
+                if not ignoring_progress and line.startswith('frame='):
                     p = line.find('fps=')
                     try:
                         frame = int(line[6:p].strip())
-                    except ValueError as e:
-                        raise FFmpegProcessException('Unable to determine conversion progress') from e
-                    self._run_progress_callback(frame)
+                    except ValueError:
+                        logging.warning(line)
+                        logging.warning('Unable to determine conversion progress - ignoring it')
+                        ignoring_progress = True
+                    else:
+                        self._progress_callback(frame)
         except FFmpegProcessException as e:
             proc.terminate()
             proc_exception = e
@@ -131,9 +146,9 @@ class FFmpegWrapper:
             )
             return_code = proc.returncode
             if return_code != 0:
-                self._run_error_callback(
+                self._error_callback(
                     return_code, proc_log, proc_exception,
                     [t for t, o in output_mapping]
                 )
             else:
-                self._run_success_callback(output_mapping, False)
+                self._success_callback(output_mapping, False)

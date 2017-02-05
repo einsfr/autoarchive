@@ -35,7 +35,32 @@ def get_arguments_parser() -> argparse.ArgumentParser:
     )
 
     subparsers = parser.add_subparsers(dest='command', help='command')
+    subparsers.required = True
+
     parser_run = subparsers.add_parser('run')
     parser_run.set_defaults(exec_func=commands.command_run)
+    parser_run.add_argument(
+        'input',
+        help='input path',
+        type=str
+    )
+    parser_run.add_argument(
+        'rules_set',
+        help='rules set path',
+        type=str
+    )
+    parser_run.add_argument(
+        '-d', '--dispatcher',
+        help='dispatcher module name',
+        type=str,
+        default='basic'
+    )
+    parser_run.add_argument(
+        '-r', '--rulesprovider',
+        help='rules provider module name',
+        dest='rules_provider',
+        type=str,
+        default='json'
+    )
 
     return parser
