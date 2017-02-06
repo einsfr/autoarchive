@@ -62,5 +62,12 @@ def get_arguments_parser() -> argparse.ArgumentParser:
         type=str,
         default='json'
     )
+    parser_run.add_argument(
+        '-dd', '--dirdepth',
+        dest='dir_depth',
+        help='output directory tree depth',
+        type=int,
+        default=1
+    )
 
     return parser
