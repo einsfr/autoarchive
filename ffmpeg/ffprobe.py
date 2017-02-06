@@ -6,7 +6,7 @@ import json
 from ffmpeg.exceptions import FFprobeTerminatedException, FFprobeProcessException, FFprobeBinaryNotFound
 
 
-TRADEMARK_NOTE = 'FFmpeg is a trademark of Fabrice Bellard <http://www.bellard.org/>, originator of the FFmpeg project.'
+logging.info('FFmpeg is a trademark of Fabrice Bellard <http://www.bellard.org/>, originator of the FFmpeg project.')
 
 
 class FFprobeBaseCommand:
@@ -21,15 +21,16 @@ class FFprobeBaseCommand:
             raise FFprobeBinaryNotFound(msg)
         self._bin_path = bin_path
 
-    def exec(self, *args, **kwargs):
-        logging.info(TRADEMARK_NOTE)
-
 
 class FFprobeInfoCommand(FFprobeBaseCommand):
 
+    # Сюда нужно добавить декодирование видео для определения прогрессивной/чересстрочной развёртки
+    # Это делается так: -select_streams v -show_frames -of json -read_intervals %+#1 ...
+    # Интервал обозначает один пакет от начала потока
+    # Возможно стоит вынести это в отдельную команду - и использовать её отсюда, чтобы не повторяться
+
     def exec(self, in_url: str, show_format: bool=True, show_streams: bool=True, show_programs: bool=True,
              timeout: int=5) -> dict:
-        super().exec()
         logging.info('Building FFprobe command...')
         args = [self._bin_path] + self.__class__.DEFAULT_ARGS
         logging.info('Appending -show* arguments...')
@@ -55,7 +56,7 @@ class FFprobeInfoCommand(FFprobeBaseCommand):
                 return json.loads(proc.stdout)
             except ValueError as e:
                 logging.error('FFprobe\'s stdout decoding error: {}'.format(str(e)))
-                logging.debug('Dumping stdout: \r\n{}'.format(proc.stdout))
+                logging.debug('Dumping stdout: {}'.format(proc.stdout))
                 raise FFprobeProcessException from e
         elif proc.returncode < 0:
             msg = 'FFprobe terminated with signal {}'.format(abs(proc.returncode))
@@ -63,5 +64,5 @@ class FFprobeInfoCommand(FFprobeBaseCommand):
             raise FFprobeTerminatedException(msg)
         else:
             logging.error('Ffprobe exited with code {}'.format(proc.returncode))
-            logging.debug('Dumping stderr: \r\n{}'.format(proc.stderr))
+            logging.debug('Dumping stderr: {}'.format(proc.stderr))
             raise FFprobeProcessException()

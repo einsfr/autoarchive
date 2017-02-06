@@ -1,7 +1,4 @@
 {
-  "input": {
-    "allowed_extensions": [".mp4"]
-  },
   "outputs": [
     {
       "parameters": [
@@ -9,13 +6,13 @@
         "-crf", "22", "-c:a", "aac", "-b:a", "128k", "-g", "25", "-bf", "4", "-filter_complex",
         "[0:a]amix=inputs=4:duration=first[mixed]", "-map", "0:v:0", "-map", "[mixed]"
       ],
-      "extension": ".mp4"
+      "filename": "{{ input_filename }}.mp4"
     },
     {
       "parameters": [
         "-c:a", "aac", "-b:a", "128k", "-map", "0:a"
       ],
-      "extension": ".m4a"
+      "filename": "{{ input_filename }}.m4a"
     }
   ]
 }

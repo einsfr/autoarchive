@@ -7,6 +7,9 @@ from args import get_arguments_parser
 from configuration import get_configuration
 
 
+BASE_DIR = os.path.dirname(__file__)
+
+
 def configure_logger(log_dir: str, log_split: bool, log_level: str, verbosity: str) -> None:
     if log_split:
         log_file = os.path.join(log_dir, '{}.log'.format(datetime.today().strftime('%Y%m%d%H%M%S')))

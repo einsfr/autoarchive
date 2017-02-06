@@ -1,6 +1,8 @@
 {
   "policy": "skip",
   "patterns": [
-    [".*\\d{3}_\\d{4}_\\d{2}.mp4$", "ffmpeg", {}]
+    [".*\\d{3}_\\d{4}_\\d{2}.mp4$", "ffmpeg", {
+      "profile": "xdcam.json"
+    }]
   ]
 }

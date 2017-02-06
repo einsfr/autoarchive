@@ -56,4 +56,4 @@ class BasicDispatcher:
         for n, p in enumerate(patterns):
             action_id, action_params = p
             logging.info('Performing action "{}" for pattern {}'.format(action_id, n + 1))
-            action = self._get_action(action_id)
+            self._get_action(action_id).run(input_url, action_params)

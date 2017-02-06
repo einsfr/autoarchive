@@ -10,7 +10,7 @@ from datetime import datetime
 from ffmpeg.exceptions import FFmpegProcessException, FFmpegBinaryNotFound
 
 
-TRADEMARK_NOTE = 'FFmpeg is a trademark of Fabrice Bellard <http://www.bellard.org/>, originator of the FFmpeg project.'
+logging.info('FFmpeg is a trademark of Fabrice Bellard <http://www.bellard.org/>, originator of the FFmpeg project.')
 
 
 class FFmpegBaseCommand:
@@ -25,9 +25,6 @@ class FFmpegBaseCommand:
             raise FFmpegBinaryNotFound(msg)
         self._bin_path = bin_path
         self._tmp_dir = os.path.abspath(tmp_dir)
-
-    def exec(self, *args, **kwargs):
-        logging.info(TRADEMARK_NOTE)
 
 
 class FFmpegConvert(FFmpegBaseCommand):
@@ -66,13 +63,12 @@ class FFmpegConvert(FFmpegBaseCommand):
                 logging.debug('Found: "{}" - removing...')
                 os.remove(t)
         raise FFmpegProcessException(
-            'Exit code {}.\r\nLast output:\r\n{}\r\nRaised exception: {}'.format(
-                return_code, '\r\n'.join(proc_log), proc_exception
+            'Exit code {}. Last output: {} Raised exception: {}'.format(
+                return_code, ' '.join(proc_log), proc_exception
             )
         )
 
     def exec(self, inputs: list, outputs: list, general_args: list=None, simulate: bool=False) -> None:
-        super().exec()
         if general_args is None:
             general_args = self.__class__.DEFAULT_GENERAL_ARGS
         logging.info('Building FFmpeg command...')
