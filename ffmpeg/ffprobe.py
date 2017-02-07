@@ -13,39 +13,20 @@ class FFprobeBaseCommand:
 
     DEFAULT_ARGS = ['-hide_banner', '-of', 'json']
 
-    def __init__(self, bin_path: str):
+    def __init__(self, bin_path: str, timeout: int=5):
         bin_path = os.path.abspath(bin_path)
         if not (os.path.isfile(bin_path) and os.access(bin_path, os.X_OK)):
             msg = 'FFprobe binary not found: "{}"'.format(bin_path)
             logging.critical(msg)
             raise FFprobeBinaryNotFound(msg)
         self._bin_path = bin_path
+        self._timeout = timeout
 
-
-class FFprobeInfoCommand(FFprobeBaseCommand):
-
-    # Сюда нужно добавить декодирование видео для определения прогрессивной/чересстрочной развёртки
-    # Это делается так: -select_streams v -show_frames -of json -read_intervals %+#1 ...
-    # Интервал обозначает один пакет от начала потока
-    # Возможно стоит вынести это в отдельную команду - и использовать её отсюда, чтобы не повторяться
-
-    def exec(self, in_url: str, show_format: bool=True, show_streams: bool=True, show_programs: bool=True,
-             timeout: int=5) -> dict:
-        logging.info('Building FFprobe command...')
-        args = [self._bin_path] + self.__class__.DEFAULT_ARGS
-        logging.info('Appending -show* arguments...')
-        if show_format:
-            args.append('-show_format')
-        if show_streams:
-            args.append('-show_streams')
-        if show_programs:
-            args.append('-show_programs')
-        args.append(in_url)
-
+    def _exec(self, args: list) -> dict:
         logging.info('Starting {}'.format(' '.join(args)))
         try:
             proc = subprocess.run(
-                args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout, universal_newlines=True
+                args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=self._timeout, universal_newlines=True
             )
         except subprocess.TimeoutExpired as e:
             logging.error('FFprobe timeout - terminating')
@@ -66,3 +47,38 @@ class FFprobeInfoCommand(FFprobeBaseCommand):
             logging.error('Ffprobe exited with code {}'.format(proc.returncode))
             logging.debug('Dumping stderr: {}'.format(proc.stderr))
             raise FFprobeProcessException()
+
+
+class FFprobeFrameCommand(FFprobeBaseCommand):
+
+    DEFAULT_ARGS = FFprobeBaseCommand.DEFAULT_ARGS + ['-show_frames']
+
+    def exec(self, in_url: str, select_streams: str=None, read_intervals: str=None) -> dict:
+        logging.info('Building FFprobe command...')
+        args = [self._bin_path] + self.__class__.DEFAULT_ARGS
+        if select_streams is not None:
+            args.append('-select_streams')
+            args.append(select_streams)
+        if read_intervals is not None:
+            args.append('-read_intervals')
+            args.append(read_intervals)
+        args.append(in_url)
+
+        return self._exec(args)
+
+
+class FFprobeInfoCommand(FFprobeBaseCommand):
+
+    def exec(self, in_url: str, show_format: bool=True, show_streams: bool=True, show_programs: bool=True) -> dict:
+        logging.info('Building FFprobe command...')
+        args = [self._bin_path] + self.__class__.DEFAULT_ARGS
+        logging.info('Appending -show* arguments...')
+        if show_format:
+            args.append('-show_format')
+        if show_streams:
+            args.append('-show_streams')
+        if show_programs:
+            args.append('-show_programs')
+        args.append(in_url)
+
+        return self._exec(args)
