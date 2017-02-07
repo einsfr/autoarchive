@@ -27,7 +27,7 @@ def configure_logger(log_dir: str, log_split: bool, log_level: str, verbosity: s
     if verbosity != 'NONE':
         console = logging.StreamHandler()
         console.setLevel(getattr(logging, verbosity))
-        console.setFormatter(logging.Formatter('%(relativeCreated)d %(levelname)s: %(message)s'))
+        console.setFormatter(logging.Formatter('%(relativeCreated)-4d %(module)-16s %(levelname)s: %(message)s'))
         logging.getLogger('').addHandler(console)
     logging.info('Logger initiated')
 
