@@ -10,9 +10,6 @@ from datetime import datetime
 from ffmpeg.exceptions import FFmpegProcessException, FFmpegBinaryNotFound
 
 
-logging.info('FFmpeg is a trademark of Fabrice Bellard <http://www.bellard.org/>, originator of the FFmpeg project.')
-
-
 class FFmpegBaseCommand:
 
     DEFAULT_GENERAL_ARGS = ['-hide_banner', '-n', '-nostdin', '-loglevel', 'warning', '-stats']

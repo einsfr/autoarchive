@@ -6,9 +6,6 @@ import json
 from ffmpeg.exceptions import FFprobeTerminatedException, FFprobeProcessException, FFprobeBinaryNotFound
 
 
-logging.info('FFmpeg is a trademark of Fabrice Bellard <http://www.bellard.org/>, originator of the FFmpeg project.')
-
-
 class FFprobeBaseCommand:
 
     DEFAULT_ARGS = ['-hide_banner', '-of', 'json']

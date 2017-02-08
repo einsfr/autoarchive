@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import pprint
 
 from action import get_action_class
 
@@ -33,7 +34,7 @@ class BasicDispatcher:
         if not self._patterns_cache:
             logging.info('Filling rules set patterns cache...')
             self._fill_patterns_cache()
-            logging.debug('Rules set patterns cache: {}'.format(self._patterns_cache))
+            logging.debug('Rules set patterns cache:\r\n{}'.format(pprint.pformat(self._patterns_cache)))
         return [(a, ap) for r, a, ap in self._patterns_cache if r.match(input_url) is not None]
 
     def _get_action(self, action_id: str):

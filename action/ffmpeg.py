@@ -1,22 +1,25 @@
 import logging
 import os
+import pprint
 
-from ffmpeg.ffprobe import FFprobeInfoCommand, FFprobeFrameCommand
+from ffmpeg.ffprobe import FFprobeInfoCommand
+from ffmpeg.ffmpeg import FFmpegConvert
 from ffmpeg import jinja_env
+from ffmpeg.inter_prog_solver import FFprobeInterlacedProgressiveSolver
 
 
 class FfmpegAction:
 
-    INTERLACING_DETERMINATION_FRAME_COUNT = 100
-
     def __init__(self, conf: dict):
         self._conf = conf
+        logging.info('Creating FFmpegConvert object...')
+        self._ffmpeg_convert = FFmpegConvert(conf['ffmpeg_path'], conf['temp_dir'])
 
     def run(self, input_url: str, action_params: dict, out_rel_path: str=None):
         logging.info('Using FFprobe to collect input file parameters...')
         ffprobe_info = FFprobeInfoCommand(self._conf['ffprobe_path'])
         input_params = ffprobe_info.exec(input_url, show_programs=False)
-        logging.debug('Input parameters: {}'.format(input_params))
+        logging.debug('Input parameters:\r\n{}'.format(pprint.pformat(input_params)))
 
         logging.info('Searching for video and audio streams...')
         v_streams = {}
@@ -26,21 +29,16 @@ class FfmpegAction:
                 v_streams[s['index']] = s
             elif s['codec_type'] == 'audio':
                 a_streams[s['index']] = s
-        logging.info('Found {} video stream(s) and {} audio stream(s)'.format(len(v_streams), len(a_streams)))
+        v_streams_count = len(v_streams)
+        a_streams_count = len(a_streams)
+        logging.info('Found {} video stream(s) and {} audio stream(s)'.format(v_streams_count, a_streams_count))
         logging.debug('Video stream index(es): {}, audio stream indexes: {}'.format(
             ', '.join([str(v) for v in v_streams.keys()]),
             ', '.join([str(a) for a in a_streams.keys()])))
-
-        logging.info('Decoding some frames to determine interlacing mode...')
-        ffprobe_frame = FFprobeFrameCommand(self._conf['ffprobe_path'])
-        for n, vs in enumerate(v_streams.values()):
-            v_frame_list = ffprobe_frame.exec(
-                input_url,
-                'v:{}'.format(n),
-                '%+#{}'.format(self.INTERLACING_DETERMINATION_FRAME_COUNT)
-            )['frames']
-            interlaced = None
-            tff = None
+        logging.info('Trying to determine field mode of all video streams...')
+        interlacing_modes = FFprobeInterlacedProgressiveSolver(self._conf).solve(input_url, len(v_streams))
+        for k, v in interlacing_modes.items():
+            v_streams[k]['field_mode'] = v
 
         profile_template_name = action_params['profile']
         logging.info('Loading profile template {}'.format(profile_template_name))
@@ -49,10 +47,12 @@ class FfmpegAction:
         context = {
             'in_filename': os.path.splitext(os.path.split(input_url)[1])[0],
             'in_format': input_params['format'],
+            'in_v_streams_count': v_streams_count,
             'in_v_streams': v_streams,
+            'in_a_streams_count': a_streams_count,
             'in_a_streams': a_streams,
         }
-        logging.debug('Rendering context: {}'.format(context))
+        logging.debug('Rendering context:\r\n{}'.format(pprint.pformat(context)))
         profile_data = template.render(context)
         logging.info('Profile rendering complete')
-        logging.debug('Rendered profile: {}'.format(profile_data))
+        logging.debug('Rendered profile:\r\n{}'.format(profile_data))
