@@ -1,4 +1,9 @@
 {
+  "inputs": [
+    {
+      "parameters": []
+    }
+  ],
   "outputs": [
     {
       "parameters": [

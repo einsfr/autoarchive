@@ -3,6 +3,7 @@ import logging
 import uuid
 import shutil
 import subprocess
+import pprint
 
 from collections import deque
 from datetime import datetime
@@ -24,7 +25,7 @@ class FFmpegBaseCommand:
         self._tmp_dir = os.path.abspath(tmp_dir)
 
 
-class FFmpegConvert(FFmpegBaseCommand):
+class FFmpegConvertCommand(FFmpegBaseCommand):
 
     @staticmethod
     def _success_callback(output_mapping: list, simulate: bool) -> None:
@@ -38,9 +39,9 @@ class FFmpegConvert(FFmpegBaseCommand):
                     name, ext = os.path.splitext(tail)
                     out_path = os.path.join(
                         head,
-                        '{}.{}.{}'.format(
+                        '{}.{}{}'.format(
                             name,
-                            os.path.split(tmp_path)[1],
+                            os.path.splitext(os.path.split(tmp_path)[1])[0][0:8],
                             ext
                         )
                     )
@@ -60,7 +61,7 @@ class FFmpegConvert(FFmpegBaseCommand):
                 logging.debug('Found: "{}" - removing...')
                 os.remove(t)
         raise FFmpegProcessException(
-            'Exit code {}. Last output: {} Raised exception: {}'.format(
+            'FFmpeg exit code {}.\r\nLast output: {}\r\nRaised exception: {}'.format(
                 return_code, ' '.join(proc_log), proc_exception
             )
         )
@@ -70,7 +71,7 @@ class FFmpegConvert(FFmpegBaseCommand):
             general_args = self.__class__.DEFAULT_GENERAL_ARGS
         logging.info('Building FFmpeg command...')
         args = [self._bin_path]
-        logging.debug('General args: {}'.format(general_args))
+        logging.debug('General args:\r\n{}'.format(pprint.pformat(general_args)))
         args.extend(general_args)
 
         logging.info('Appending inputs...')
@@ -80,9 +81,9 @@ class FFmpegConvert(FFmpegBaseCommand):
                 msg = 'Input file not found: "{}"'.format(in_url)
                 logging.error(msg)
                 raise FileNotFoundError(msg)
-            in_args.append('i')
+            in_args.append('-i')
             in_args.append(in_url)
-            logging.debug('Extending args with {}'.format(in_args))
+            logging.debug('Extending args with\r\n{}'.format(pprint.pformat(in_args)))
             args.extend(in_args)
 
         logging.info('Appending outputs...')
@@ -93,12 +94,13 @@ class FFmpegConvert(FFmpegBaseCommand):
                 msg = 'Output file "{}" already exists'.format(out_path)
                 logging.error(msg)
                 raise FileExistsError(msg)
-            tmp_path = os.path.join(self._tmp_dir, uuid.uuid4())
-            output_mapping.append((out_path, tmp_path))
+            out_ext = os.path.splitext(os.path.split(out_path)[1])[1]
+            tmp_path = os.path.join(self._tmp_dir, '{}{}'.format(str(uuid.uuid4()), out_ext))
+            output_mapping.append((tmp_path, out_path))
             out_args.append(tmp_path)
-            logging.debug('Extending args with {}'.format(out_args))
+            logging.debug('Extending args with\r\n{}'.format(pprint.pformat(out_args)))
             args.extend(out_args)
-        logging.debug('Output mapping: {}'.format(output_mapping))
+        logging.debug('Output mapping (tmp_path, out_path):\r\n{}'.format(pprint.pformat(output_mapping)))
 
         logging.info('Starting {}'.format(' '.join(args)))
         if simulate:

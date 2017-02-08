@@ -29,7 +29,7 @@ def configure_logger(log_dir: str, log_split: bool, log_level: str, verbosity: s
     if verbosity != 'NONE':
         console = logging.StreamHandler()
         console.setLevel(getattr(logging, verbosity))
-        console.setFormatter(logging.Formatter('%(relativeCreated)-4d %(module)-18s %(levelname)s: %(message)s'))
+        console.setFormatter(logging.Formatter('%(relativeCreated)-10d %(module)-18s %(levelname)s: %(message)s'))
         logging.getLogger('').addHandler(console)
     logging.info('Logger initiated')
 
@@ -41,7 +41,6 @@ if __name__ == '__main__':
     try:
         args.exec_func(args, conf)
     except Exception as e:
-        logging.critical(str(e))
         tbe = TracebackException.from_exception(e)
         logging.critical(' '.join(list(tbe.format())))
         sys.exit(1)

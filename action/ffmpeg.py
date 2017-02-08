@@ -1,9 +1,10 @@
 import logging
 import os
 import pprint
+import json
 
 from ffmpeg.ffprobe import FFprobeInfoCommand
-from ffmpeg.ffmpeg import FFmpegConvert
+from ffmpeg.ffmpeg import FFmpegConvertCommand
 from ffmpeg import jinja_env
 from ffmpeg.inter_prog_solver import FFprobeInterlacedProgressiveSolver
 
@@ -12,8 +13,8 @@ class FfmpegAction:
 
     def __init__(self, conf: dict):
         self._conf = conf
-        logging.info('Creating FFmpegConvert object...')
-        self._ffmpeg_convert = FFmpegConvert(conf['ffmpeg_path'], conf['temp_dir'])
+        logging.info('Creating FFmpegConvertCommand object...')
+        self._ffmpeg_convert = FFmpegConvertCommand(conf['ffmpeg_path'], conf['temp_dir'])
 
     def run(self, input_url: str, action_params: dict, out_rel_path: str=None):
         logging.info('Using FFprobe to collect input file parameters...')
@@ -54,5 +55,24 @@ class FfmpegAction:
         }
         logging.debug('Rendering context:\r\n{}'.format(pprint.pformat(context)))
         profile_data = template.render(context)
-        logging.info('Profile rendering complete')
         logging.debug('Rendered profile:\r\n{}'.format(profile_data))
+        logging.info('Profile rendering complete - loading...')
+        try:
+            profile_dict = json.loads(profile_data)
+        except ValueError as e:
+            raise ValueError('Profile {} is not a valid JSON document: {}'.format(profile_template_name, str(e)))
+        logging.info('Starting FFmpeg conversion...')
+        self._ffmpeg_convert.exec(
+            [(profile_dict['inputs'][0]['parameters'], input_url)],
+            [
+                (
+                    o['parameters'],
+                    os.path.abspath(
+                        os.path.join(
+                            self._conf['out_dir'],
+                            o['filename'] if out_rel_path is None else os.path.join(out_rel_path, o['filename']))
+                    )
+                )
+                for o in profile_dict['outputs']
+            ]
+        )
