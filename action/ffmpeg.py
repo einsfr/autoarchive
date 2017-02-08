@@ -7,6 +7,8 @@ from ffmpeg import jinja_env
 
 class FfmpegAction:
 
+    INTERLACING_DETERMINATION_FRAME_COUNT = 100
+
     def __init__(self, conf: dict):
         self._conf = conf
 
@@ -29,11 +31,16 @@ class FfmpegAction:
             ', '.join([str(v) for v in v_streams.keys()]),
             ', '.join([str(a) for a in a_streams.keys()])))
 
-        logging.info('Collecting frames metadata from video streams...')
+        logging.info('Decoding some frames to determine interlacing mode...')
         ffprobe_frame = FFprobeFrameCommand(self._conf['ffprobe_path'])
         for n, vs in enumerate(v_streams.values()):
-            v_frame_meta = ffprobe_frame.exec(input_url, 'v:{}'.format(n), '%+#1')['frames'][0]
-            v_streams[v_frame_meta['stream_index']]['first_frame_meta'] = v_frame_meta
+            v_frame_list = ffprobe_frame.exec(
+                input_url,
+                'v:{}'.format(n),
+                '%+#{}'.format(self.INTERLACING_DETERMINATION_FRAME_COUNT)
+            )['frames']
+            interlaced = None
+            tff = None
 
         profile_template_name = action_params['profile']
         logging.info('Loading profile template {}'.format(profile_template_name))
