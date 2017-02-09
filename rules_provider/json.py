@@ -4,6 +4,7 @@ import logging
 import pprint
 
 from rules_provider import validate_rules_set
+from autoarchive import TRACE_LEVEL_NUM
 
 
 class JsonRulesProvider:
@@ -19,6 +20,6 @@ class JsonRulesProvider:
         except ValueError as e:
             raise ValueError('Rules set file {} is not a valid JSON document: {}'.format(rules_set_path, str(e)))
         logging.debug('Validating rules set...')
-        logging.debug('Loaded rules set:\r\n{}'.format(pprint.pformat(rules_set)))
+        logging.log(TRACE_LEVEL_NUM, 'Loaded rules set:\r\n{}'.format(pprint.pformat(rules_set)))
         validate_rules_set(rules_set)
         return rules_set

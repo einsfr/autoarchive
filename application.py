@@ -174,13 +174,3 @@ class OldApplication:
         else:
             self._log('Finished without errors')
         self._log('Elapsed time: {}'.format(datetime.datetime.now() - start_time))
-
-    def _build_file_list(self):
-        file_list = []
-        root_len = len(self.input_path)
-        allowed_exts = [e.lower() for e in self.profile['input']['allowed_extensions']]
-        for path, dirs, files in os.walk(self.input_path):
-            files_allowed = [f for f in files if os.path.splitext(f)[1].lower() in allowed_exts]
-            if len(files_allowed) > 0:
-                file_list.append({'dir': path[root_len + 1:], 'files': files_allowed})
-        return file_list

@@ -3,7 +3,6 @@ import logging
 import uuid
 import shutil
 import subprocess
-import pprint
 
 from collections import deque
 from datetime import datetime
@@ -15,7 +14,7 @@ class FFmpegBaseCommand:
 
     DEFAULT_GENERAL_ARGS = ['-hide_banner', '-n', '-nostdin', '-loglevel', 'warning', '-stats']
 
-    def __init__(self, bin_path: str, tmp_dir: str):
+    def __init__(self, bin_path: str, tmp_dir: str, simulate: bool):
         bin_path = os.path.abspath(bin_path)
         if not (os.path.isfile(bin_path) and os.access(bin_path, os.X_OK)):
             msg = 'FFmpeg binary not found: "{}"'.format(bin_path)
@@ -23,38 +22,36 @@ class FFmpegBaseCommand:
             raise FFmpegBinaryNotFound(msg)
         self._bin_path = bin_path
         self._tmp_dir = os.path.abspath(tmp_dir)
+        self._simulate = simulate
 
 
 class FFmpegConvertCommand(FFmpegBaseCommand):
 
-    @staticmethod
-    def _success_callback(output_mapping: list, simulate: bool) -> None:
-        if not simulate:
-            logging.info('Moving files from temporary directory...')
-            for tmp_path, out_path in output_mapping:
-                logging.debug('Temporary file: "{}"; output file: "{}"'.format(tmp_path, out_path))
-                if os.path.exists(out_path):
-                    logging.warning('Output file "{}" already exists'.format(out_path))
-                    head, tail = os.path.split(out_path)
-                    name, ext = os.path.splitext(tail)
-                    out_path = os.path.join(
-                        head,
-                        '{}.{}{}'.format(
-                            name,
-                            os.path.splitext(os.path.split(tmp_path)[1])[0][0:8],
-                            ext
-                        )
+    def _success_callback(self, output_mapping: list) -> None:
+        logging.info('Moving files from temporary directory...')
+        for tmp_path, out_path in output_mapping:
+            logging.debug('Temporary file: "{}"; output file: "{}"'.format(tmp_path, out_path))
+            if os.path.exists(out_path):
+                logging.warning('Output file "{}" already exists'.format(out_path))
+                head, tail = os.path.split(out_path)
+                name, ext = os.path.splitext(tail)
+                out_path = os.path.join(
+                    head,
+                    '{}.{}{}'.format(
+                        name,
+                        os.path.splitext(os.path.split(tmp_path)[1])[0][0:8],
+                        ext
                     )
-                    logging.warning('New output file name: "{}"'.format(out_path))
+                )
+                logging.warning('New output file name: "{}"'.format(out_path))
+            if not self._simulate:
                 shutil.move(tmp_path, out_path)
         logging.info('Done')
 
-    @staticmethod
-    def _progress_callback(frame: int) -> None:
+    def _progress_callback(self,frame: int) -> None:
         logging.debug('Processed {} frames'.format(frame))
 
-    @staticmethod
-    def _error_callback(return_code: int, proc_log: deque, proc_exception: Exception, tmp_paths: list) -> None:
+    def _error_callback(self, return_code: int, proc_log: deque, proc_exception: Exception, tmp_paths: list) -> None:
         logging.info('Removing temporary files...')
         for t in tmp_paths:
             if os.path.exists(t):
@@ -66,12 +63,12 @@ class FFmpegConvertCommand(FFmpegBaseCommand):
             )
         )
 
-    def exec(self, inputs: list, outputs: list, general_args: list=None, simulate: bool=False) -> None:
+    def exec(self, inputs: list, outputs: list, general_args: list=None) -> None:
         if general_args is None:
             general_args = self.__class__.DEFAULT_GENERAL_ARGS
         logging.debug('Building FFmpeg command...')
         args = [self._bin_path]
-        logging.debug('General args:\r\n{}'.format(pprint.pformat(general_args)))
+        logging.debug('General args: {}'.format(general_args))
         args.extend(general_args)
 
         logging.debug('Appending inputs...')
@@ -83,7 +80,7 @@ class FFmpegConvertCommand(FFmpegBaseCommand):
                 raise FileNotFoundError(msg)
             in_args.append('-i')
             in_args.append(in_url)
-            logging.debug('Extending args with\r\n{}'.format(pprint.pformat(in_args)))
+            logging.debug('Extending args with {}'.format(in_args))
             args.extend(in_args)
 
         logging.debug('Appending outputs...')
@@ -98,13 +95,14 @@ class FFmpegConvertCommand(FFmpegBaseCommand):
             tmp_path = os.path.join(self._tmp_dir, '{}{}'.format(str(uuid.uuid4()), out_ext))
             output_mapping.append((tmp_path, out_path))
             out_args.append(tmp_path)
-            logging.debug('Extending args with\r\n{}'.format(pprint.pformat(out_args)))
+            logging.debug('Extending args with {}'.format(out_args))
             args.extend(out_args)
-        logging.debug('Output mapping (tmp_path, out_path):\r\n{}'.format(pprint.pformat(output_mapping)))
+        logging.debug('Output mapping (tmp_path, out_path): {}'.format(output_mapping))
 
-        logging.debug('Starting {}'.format(' '.join(args)))
-        if simulate:
-            self._success_callback(output_mapping, True)
+        logging.info('Starting FFmpeg...')
+        logging.debug(' '.join(args))
+        if self._simulate:
+            self._success_callback(output_mapping)
             return
 
         proc_log = deque(maxlen=5)
@@ -146,4 +144,4 @@ class FFmpegConvertCommand(FFmpegBaseCommand):
                     [t for t, o in output_mapping]
                 )
             else:
-                self._success_callback(output_mapping, False)
+                self._success_callback(output_mapping)

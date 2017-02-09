@@ -10,6 +10,7 @@ from configuration import get_configuration
 
 
 BASE_DIR = os.path.dirname(__file__)
+TRACE_LEVEL_NUM = 5
 
 
 def configure_logger(log_dir: str, log_split: bool, log_level: str, verbosity: str) -> None:
@@ -26,6 +27,7 @@ def configure_logger(log_dir: str, log_split: bool, log_level: str, verbosity: s
         filename=log_file,
         filemode=file_mode
     )
+    logging.addLevelName(TRACE_LEVEL_NUM, 'TRACE')
     if verbosity != 'NONE':
         console = logging.StreamHandler()
         console.setLevel(getattr(logging, verbosity))

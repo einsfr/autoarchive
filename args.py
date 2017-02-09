@@ -9,7 +9,7 @@ def get_arguments_parser() -> argparse.ArgumentParser:
         '-v', '--verbosity',
         help='verbosity level: DEBUG, INFO, WARNING (DEFAULT), ERROR, CRITICAL, NONE',
         type=str,
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL', 'NONE'],
+        choices=['TRACE', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL', 'NONE'],
         default='INFO'
     )
     parser.add_argument(
@@ -17,7 +17,7 @@ def get_arguments_parser() -> argparse.ArgumentParser:
         dest='log_level',
         help='file logging level: DEBUG, INFO, WARNING (DEFAULT), ERROR, CRITICAL',
         type=str,
-        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+        choices=['TRACE', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
         default='INFO'
     )
     parser.add_argument(
@@ -32,6 +32,11 @@ def get_arguments_parser() -> argparse.ArgumentParser:
         help='path to configuration file',
         type=str,
         default='config.json'
+    )
+    parser.add_argument(
+        '-s', '--simulate',
+        help='simulate command execution for test purposes - no changes will be made',
+        action='store_true'
     )
 
     subparsers = parser.add_subparsers(dest='command', help='command')
@@ -73,7 +78,7 @@ def get_arguments_parser() -> argparse.ArgumentParser:
         dest='dir_depth',
         help='output directory tree depth',
         type=int,
-        default=1
+        default=0
     )
 
     return parser

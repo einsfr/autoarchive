@@ -3,6 +3,7 @@ import os
 import pprint
 import json
 
+from autoarchive import TRACE_LEVEL_NUM
 from ffmpeg.ffprobe import FFprobeInfoCommand
 from ffmpeg.ffmpeg import FFmpegConvertCommand
 from ffmpeg import jinja_env
@@ -11,16 +12,17 @@ from ffmpeg.inter_prog_solver import FFprobeInterlacedProgressiveSolver
 
 class FfmpegAction:
 
-    def __init__(self, conf: dict):
+    def __init__(self, conf: dict, simulate: bool):
         self._conf = conf
+        self._simulate = simulate
         logging.debug('Creating FFmpegConvertCommand object...')
-        self._ffmpeg_convert = FFmpegConvertCommand(conf['ffmpeg_path'], conf['temp_dir'])
+        self._ffmpeg_convert = FFmpegConvertCommand(conf['ffmpeg_path'], conf['temp_dir'], simulate)
 
-    def run(self, input_url: str, action_params: dict, out_rel_path: str=None):
+    def run(self, input_url: str, action_params: dict, out_dir_path: str):
         logging.debug('Using FFprobe to collect input file parameters...')
         ffprobe_info = FFprobeInfoCommand(self._conf['ffprobe_path'])
         input_params = ffprobe_info.exec(input_url, show_programs=False)
-        logging.debug('Input parameters:\r\n{}'.format(pprint.pformat(input_params)))
+        logging.log(TRACE_LEVEL_NUM, 'Input parameters:\r\n{}'.format(pprint.pformat(input_params)))
 
         logging.debug('Searching for video and audio streams...')
         v_streams = {}
@@ -53,9 +55,9 @@ class FfmpegAction:
             'in_a_streams_count': a_streams_count,
             'in_a_streams': a_streams,
         }
-        logging.debug('Rendering context:\r\n{}'.format(pprint.pformat(context)))
+        logging.log(TRACE_LEVEL_NUM, 'Rendering context:\r\n{}'.format(pprint.pformat(context)))
         profile_data = template.render(context)
-        logging.debug('Rendered profile:\r\n{}'.format(profile_data))
+        logging.log(TRACE_LEVEL_NUM, 'Rendered profile:\r\n{}'.format(profile_data))
         logging.debug('Profile rendering complete - loading...')
         try:
             profile_dict = json.loads(profile_data)
@@ -64,15 +66,5 @@ class FfmpegAction:
         logging.debug('Starting FFmpeg conversion...')
         self._ffmpeg_convert.exec(
             [(profile_dict['inputs'][0]['parameters'], input_url)],
-            [
-                (
-                    o['parameters'],
-                    os.path.abspath(
-                        os.path.join(
-                            self._conf['out_dir'],
-                            o['filename'] if out_rel_path is None else os.path.join(out_rel_path, o['filename']))
-                    )
-                )
-                for o in profile_dict['outputs']
-            ]
+            [(o['parameters'], os.path.join(out_dir_path, o['filename'])) for o in profile_dict['outputs']]
         )
