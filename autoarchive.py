@@ -10,11 +10,6 @@ from configuration import get_configuration
 
 
 BASE_DIR = os.path.dirname(__file__)
-TRACE_LEVEL_NUM = 15
-
-
-def trace(self, msg, *arg, **kwargs):
-    self.log(TRACE_LEVEL_NUM, msg, *arg, **kwargs)
 
 
 def configure_logger(log_dir: str, log_split: bool, log_level: str, verbosity: str) -> None:
@@ -31,14 +26,12 @@ def configure_logger(log_dir: str, log_split: bool, log_level: str, verbosity: s
         filename=log_file,
         filemode=file_mode
     )
-    logging.addLevelName(TRACE_LEVEL_NUM, 'TRACE')
-    logging.Logger.trace = trace
     if verbosity != 'NONE':
         console = logging.StreamHandler()
         console.setLevel(getattr(logging, verbosity))
         console.setFormatter(logging.Formatter('%(relativeCreated)-10d %(module)-18s %(levelname)s: %(message)s'))
         logging.getLogger('').addHandler(console)
-    logging.info('Logger initiated')
+    logging.debug('Logger initiated')
 
 
 if __name__ == '__main__':

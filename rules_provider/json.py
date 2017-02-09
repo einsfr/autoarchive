@@ -18,7 +18,7 @@ class JsonRulesProvider:
             raise FileNotFoundError('Rules set files doesn\'t exist: {}'.format(rules_set_path))
         except ValueError as e:
             raise ValueError('Rules set file {} is not a valid JSON document: {}'.format(rules_set_path, str(e)))
-        logging.info('Validating rules set...')
+        logging.debug('Validating rules set...')
         logging.debug('Loaded rules set:\r\n{}'.format(pprint.pformat(rules_set)))
         validate_rules_set(rules_set)
         return rules_set

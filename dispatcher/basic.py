@@ -32,7 +32,7 @@ class BasicDispatcher:
 
     def _get_matching_patterns(self, input_url: str) -> list:
         if not self._patterns_cache:
-            logging.info('Filling rules set patterns cache...')
+            logging.debug('Filling rules set patterns cache...')
             self._fill_patterns_cache()
             logging.debug('Rules set patterns cache:\r\n{}'.format(pprint.pformat(self._patterns_cache)))
         return [(a, ap) for r, a, ap in self._patterns_cache if r.match(input_url) is not None]
@@ -56,5 +56,5 @@ class BasicDispatcher:
         logging.debug('Matches: {}'.format(patterns))
         for n, p in enumerate(patterns):
             action_id, action_params = p
-            logging.info('Performing action "{}" for pattern {}'.format(action_id, n + 1))
+            logging.info('Performing action "{}" for pattern {} of {}'.format(action_id, n + 1, len(patterns)))
             self._get_action(action_id).run(input_url, action_params)

@@ -20,7 +20,7 @@ class FFprobeBaseCommand:
         self._timeout = timeout
 
     def _exec(self, args: list) -> dict:
-        logging.info('Starting {}'.format(' '.join(args)))
+        logging.debug('Starting {}'.format(' '.join(args)))
         try:
             proc = subprocess.run(
                 args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=self._timeout, universal_newlines=True
@@ -29,7 +29,7 @@ class FFprobeBaseCommand:
             logging.error('FFprobe timeout - terminating')
             raise FFprobeProcessException from e
         if proc.returncode == 0:
-            logging.info('FFprobe done')
+            logging.debug('FFprobe done')
             try:
                 return json.loads(proc.stdout)
             except ValueError as e:
@@ -38,7 +38,6 @@ class FFprobeBaseCommand:
                 raise FFprobeProcessException from e
         elif proc.returncode < 0:
             msg = 'FFprobe terminated with signal {}'.format(abs(proc.returncode))
-            logging.info(msg)
             raise FFprobeTerminatedException(msg)
         else:
             logging.error('Ffprobe exited with code {}'.format(proc.returncode))
@@ -51,7 +50,7 @@ class FFprobeFrameCommand(FFprobeBaseCommand):
     DEFAULT_ARGS = FFprobeBaseCommand.DEFAULT_ARGS + ['-show_frames']
 
     def exec(self, in_url: str, select_streams: str=None, read_intervals: str=None) -> dict:
-        logging.info('Building FFprobe command...')
+        logging.debug('Building FFprobe command...')
         args = [self._bin_path] + self.__class__.DEFAULT_ARGS
         if select_streams is not None:
             args.append('-select_streams')
@@ -67,9 +66,9 @@ class FFprobeFrameCommand(FFprobeBaseCommand):
 class FFprobeInfoCommand(FFprobeBaseCommand):
 
     def exec(self, in_url: str, show_format: bool=True, show_streams: bool=True, show_programs: bool=True) -> dict:
-        logging.info('Building FFprobe command...')
+        logging.debug('Building FFprobe command...')
         args = [self._bin_path] + self.__class__.DEFAULT_ARGS
-        logging.info('Appending -show* arguments...')
+        logging.debug('Appending -show* arguments...')
         if show_format:
             args.append('-show_format')
         if show_streams:

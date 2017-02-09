@@ -9,7 +9,7 @@ def get_arguments_parser() -> argparse.ArgumentParser:
         '-v', '--verbosity',
         help='verbosity level: DEBUG, INFO, WARNING (DEFAULT), ERROR, CRITICAL, NONE',
         type=str,
-        choices=['TRACE', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL', 'NONE'],
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL', 'NONE'],
         default='INFO'
     )
     parser.add_argument(
@@ -17,7 +17,7 @@ def get_arguments_parser() -> argparse.ArgumentParser:
         dest='log_level',
         help='file logging level: DEBUG, INFO, WARNING (DEFAULT), ERROR, CRITICAL',
         type=str,
-        choices=['TRACE', 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
         default='INFO'
     )
     parser.add_argument(

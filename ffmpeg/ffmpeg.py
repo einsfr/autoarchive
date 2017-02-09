@@ -30,7 +30,7 @@ class FFmpegConvertCommand(FFmpegBaseCommand):
     @staticmethod
     def _success_callback(output_mapping: list, simulate: bool) -> None:
         if not simulate:
-            logging.info('Moving file from temporary directory...')
+            logging.info('Moving files from temporary directory...')
             for tmp_path, out_path in output_mapping:
                 logging.debug('Temporary file: "{}"; output file: "{}"'.format(tmp_path, out_path))
                 if os.path.exists(out_path):
@@ -47,7 +47,7 @@ class FFmpegConvertCommand(FFmpegBaseCommand):
                     )
                     logging.warning('New output file name: "{}"'.format(out_path))
                 shutil.move(tmp_path, out_path)
-        logging.info('Done!')
+        logging.info('Done')
 
     @staticmethod
     def _progress_callback(frame: int) -> None:
@@ -69,12 +69,12 @@ class FFmpegConvertCommand(FFmpegBaseCommand):
     def exec(self, inputs: list, outputs: list, general_args: list=None, simulate: bool=False) -> None:
         if general_args is None:
             general_args = self.__class__.DEFAULT_GENERAL_ARGS
-        logging.info('Building FFmpeg command...')
+        logging.debug('Building FFmpeg command...')
         args = [self._bin_path]
         logging.debug('General args:\r\n{}'.format(pprint.pformat(general_args)))
         args.extend(general_args)
 
-        logging.info('Appending inputs...')
+        logging.debug('Appending inputs...')
         for i in inputs:
             in_args, in_url = i
             if not os.path.isfile(in_url):
@@ -86,7 +86,7 @@ class FFmpegConvertCommand(FFmpegBaseCommand):
             logging.debug('Extending args with\r\n{}'.format(pprint.pformat(in_args)))
             args.extend(in_args)
 
-        logging.info('Appending outputs...')
+        logging.debug('Appending outputs...')
         output_mapping = []
         for o in outputs:
             out_args, out_path = o
@@ -102,7 +102,7 @@ class FFmpegConvertCommand(FFmpegBaseCommand):
             args.extend(out_args)
         logging.debug('Output mapping (tmp_path, out_path):\r\n{}'.format(pprint.pformat(output_mapping)))
 
-        logging.info('Starting {}'.format(' '.join(args)))
+        logging.debug('Starting {}'.format(' '.join(args)))
         if simulate:
             self._success_callback(output_mapping, True)
             return

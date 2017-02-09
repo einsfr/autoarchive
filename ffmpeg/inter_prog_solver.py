@@ -59,7 +59,7 @@ class FFprobeInterlacedProgressiveSolver(AbstractInterlacedProgressiveSolver):
     def solve(self, input_url: str, video_stream_count: int) -> dict:
         if video_stream_count == 0:
             raise ValueError('Input must have at least one video stream')
-        logging.info('Decoding some frames to determine field mode...')
+        logging.info('Decoding some frames to determine video streams field mode...')
         ffprobe_frame = FFprobeFrameCommand(self._conf['ffprobe_path'])
         result = {}
         for n in range(0, video_stream_count):
@@ -74,6 +74,6 @@ class FFprobeInterlacedProgressiveSolver(AbstractInterlacedProgressiveSolver):
                 *collected
             ))
             decision = self._solve(*collected)
-            logging.info('Stream {} solved as {}'.format(stream_index, self.DECISIONS[decision]))
+            logging.debug('Stream {} solved as {}'.format(stream_index, self.DECISIONS[decision]))
             result[stream_index] = decision
         return result
