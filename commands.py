@@ -12,7 +12,10 @@ def command_run(args, conf: dict) -> None:
         raise ValueError('Rules set can\'t be empty')
     if type(rules_set) != dict:
         raise TypeError('Rules set must be a dictionary')
+    args_dict = vars(args)
+    args_dict['rules_set'] = rules_set
     logging.debug('Rules set ready')
     logging.debug('Starting dispatcher...')
-    dispatcher = get_dispatcher_class(args.dispatcher)(conf, rules_set, args.dir_depth)
-    dispatcher.dispatch(args.input)
+    dispatcher_class = get_dispatcher_class(args.dispatcher)
+    dispatcher = dispatcher_class(conf, **args_dict)
+    dispatcher.dispatch()

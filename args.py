@@ -40,8 +40,8 @@ def get_arguments_parser() -> argparse.ArgumentParser:
     parser_run = subparsers.add_parser('run')
     parser_run.set_defaults(exec_func=commands.command_run)
     parser_run.add_argument(
-        'input',
-        help='input path',
+        'input_url',
+        help='input URL',
         type=str
     )
     parser_run.add_argument(
@@ -61,6 +61,12 @@ def get_arguments_parser() -> argparse.ArgumentParser:
         dest='rules_provider',
         type=str,
         default='json'
+    )
+    parser_run.add_argument(
+        '-ir', '--useindirasroot',
+        help='if input URL is a directory use out_dir/input_dir instead of out_dir only as output root',
+        dest='use_in_dir_as_root',
+        action='store_true'
     )
     parser_run.add_argument(
         '-dd', '--dirdepth',
