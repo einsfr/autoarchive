@@ -1,0 +1,15 @@
+{
+  "input": [
+    {
+      "parameters": []
+    }
+  ],
+  "outputs": [
+    {
+      "parameters": [
+        "-c:v", "libx264", "-flags", "+ildct+ilme", "-x264opts", "tff=1", "-preset", "medium", "-pix_fmt", "yuv422p", "-crf", "22", "-c:a", "aac", "-b:a", "128k", "-g", "25", "-bf", "4", "-filter_complex", "[0:a:0][0:a:1]amerge=inputs=2[aout]", "-map", "0:v:0", "-map", "[aout]"
+      ],
+      "filename": "{{ in_filename }}.mp4"
+    }
+  ]
+}

@@ -1,8 +1,11 @@
 {
-  "policy": "skip",
+  "policy": "warning",
   "patterns": [
     [".*\\d{3}_\\d{4}_\\d{2}\\.mp4$", "ffmpeg", {
       "profile": "xdcam.json"
+    }],
+    [".*\\.mxf$", "ffmpeg", {
+      "profile": "reps_progs.json"
     }]
   ]
 }

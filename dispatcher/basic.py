@@ -4,7 +4,7 @@ import re
 import pprint
 
 from action import get_action_class
-from autoarchive import TRACE_LEVEL_NUM
+from dispatcher import PolicyViolationException
 
 
 class BasicDispatcher:
@@ -43,7 +43,7 @@ class BasicDispatcher:
         if not self._patterns_cache:
             logging.debug('Filling rules set patterns cache...')
             self._fill_patterns_cache()
-            logging.log(TRACE_LEVEL_NUM, 'Rules set patterns cache:\r\n{}'.format(pprint.pformat(self._patterns_cache)))
+            logging.debug('Rules set patterns cache:\r\n{}'.format(pprint.pformat(self._patterns_cache)))
         return [(a, ap) for r, a, ap in self._patterns_cache if r.match(in_path) is not None]
 
     def _get_action(self, action_id: str):
@@ -64,7 +64,14 @@ class BasicDispatcher:
         patterns = self._get_matching_patterns(in_path)
         if not patterns:
             logging.info('No matches were found')
-            return
+            if self._policy == 'skip':
+                return
+            elif self._policy == 'warning':
+                logging.warning('No matches were found for "{}"'.format(in_path))
+            elif self._policy == 'error':
+                raise PolicyViolationException('No matches were found for "{}"'.format(in_path))
+            else:
+                raise ValueError('Unknown policy: {}'.format(self._policy))
         logging.info('Found {} matching pattern(s)'.format(len(patterns)))
         logging.debug('Matches: {}'.format(patterns))
         for n, p in enumerate(patterns):
@@ -84,6 +91,7 @@ class BasicDispatcher:
         dir_list = []
         input_root_len = len(self._input_url)
         for path, dirs, files in os.walk(self._input_url):
+            logging.debug('Path: {} Dirs: {} Files: {}'.format(path, dirs, files))
             if len(files):
                 dir_list.append({'dir': path[input_root_len + 1:], 'files': files})
 
@@ -94,22 +102,48 @@ class BasicDispatcher:
         logging.debug('Found {} files(s) in {} directory(ies)'.format(file_count, dir_count))
 
         processed_files_count = 0
-        error_paths = []
-        if self._dir_depth == 0:
-            out_dir = out_base_dir
-            logging.debug('Creating output directory "{}"...'.format(out_dir))
+        processed_errors = []
+        if self._dir_depth < 0:
+            logging.debug('Creating output directory "{}"...'.format(out_base_dir))
             if not self._simulate:
-                os.makedirs(out_dir, exist_ok=True)
+                os.makedirs(out_base_dir, exist_ok=True)
         for d in dir_list:
             if self._dir_depth > 0:
-                pass
+                path = d['dir']
+                path_list = []
+                while True:
+                    head, tail = os.path.split(path)
+                    path = head
+                    if tail:
+                        path_list.append(tail)
+                    if not head:
+                        break
+                if len(path_list) == 0:
+                    out_dir = out_base_dir
+                else:
+                    if len(path_list) < self._dir_depth:
+                        out_dir = os.path.join(out_base_dir, *path_list[::-1])
+                    else:
+                        out_dir = os.path.join(out_base_dir, *path_list[:-self._dir_depth - 1:-1])
+                    logging.debug('Creating output directory "{}"...'.format(out_dir))
+                    if not self._simulate:
+                        os.makedirs(out_dir, exist_ok=True)
+            else:
+                out_dir = out_base_dir
             for f in d['files']:
                 input_path = os.path.join(self._input_url, d['dir'], f)
                 processed_files_count += 1
                 logging.info('Processing file {} of {}: "{}"'.format(processed_files_count, file_count, input_path))
-                self._dispatch_file_dir_common(input_path, out_dir)
-        errors_count = len(error_paths)
+                try:
+                    self._dispatch_file_dir_common(input_path, out_dir)
+                except PolicyViolationException as e:
+                    raise e
+                except Exception as e:
+                    processed_errors.append((input_path, e))
+        errors_count = len(processed_errors)
         if errors_count:
             logging.warning('Finished with {} error(s)'.format(errors_count))
+            for e in processed_errors:
+                logging.warning('"{}": {}'.format(*e))
         else:
             logging.info('Finished without errors')

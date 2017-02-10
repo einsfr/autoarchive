@@ -31,3 +31,7 @@ def validate_rules_set(rules_set: dict):
         if type(p[2]) != dict:
             raise TypeError('Pattern list\'s third element must be a dictionary (action parameters) - {} given'.format(
                 type(p[2])))
+    policy = rules_set['policy']
+    allowed_policies = ['skip', 'error', 'warning']
+    if policy not in allowed_policies:
+        raise ValueError('Unknown policy: {}. Allowed values: []'.format(policy, allowed_policies))

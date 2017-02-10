@@ -3,7 +3,6 @@ import os
 import pprint
 import json
 
-from autoarchive import TRACE_LEVEL_NUM
 from ffmpeg.ffprobe import FFprobeInfoCommand
 from ffmpeg.ffmpeg import FFmpegConvertCommand
 from ffmpeg import jinja_env
@@ -22,7 +21,7 @@ class FfmpegAction:
         logging.debug('Using FFprobe to collect input file parameters...')
         ffprobe_info = FFprobeInfoCommand(self._conf['ffprobe_path'])
         input_params = ffprobe_info.exec(input_url, show_programs=False)
-        logging.log(TRACE_LEVEL_NUM, 'Input parameters:\r\n{}'.format(pprint.pformat(input_params)))
+        logging.debug('Input parameters:\r\n{}'.format(pprint.pformat(input_params)))
 
         logging.debug('Searching for video and audio streams...')
         v_streams = {}
@@ -55,9 +54,9 @@ class FfmpegAction:
             'in_a_streams_count': a_streams_count,
             'in_a_streams': a_streams,
         }
-        logging.log(TRACE_LEVEL_NUM, 'Rendering context:\r\n{}'.format(pprint.pformat(context)))
+        logging.debug('Rendering context:\r\n{}'.format(pprint.pformat(context)))
         profile_data = template.render(context)
-        logging.log(TRACE_LEVEL_NUM, 'Rendered profile:\r\n{}'.format(profile_data))
+        logging.debug('Rendered profile:\r\n{}'.format(profile_data))
         logging.debug('Profile rendering complete - loading...')
         try:
             profile_dict = json.loads(profile_data)

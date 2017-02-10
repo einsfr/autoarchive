@@ -10,7 +10,6 @@ from configuration import get_configuration
 
 
 BASE_DIR = os.path.dirname(__file__)
-TRACE_LEVEL_NUM = 5
 
 
 def configure_logger(log_dir: str, log_split: bool, log_level: str, verbosity: str) -> None:
@@ -20,19 +19,21 @@ def configure_logger(log_dir: str, log_split: bool, log_level: str, verbosity: s
     else:
         log_file = os.path.join(log_dir, 'autoarchive.log')
         file_mode = 'a'
-    logging.basicConfig(
-        level=getattr(logging, log_level),
-        format='%(process)-6d %(asctime)s %(levelname)-8s %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S',
-        filename=log_file,
-        filemode=file_mode
-    )
-    logging.addLevelName(TRACE_LEVEL_NUM, 'TRACE')
+
+    logger = logging.getLogger('')
+    logger.setLevel(logging.NOTSET)
+
+    file = logging.FileHandler(log_file, file_mode)
+    file.setLevel(getattr(logging, log_level))
+    file.setFormatter(logging.Formatter('%(process)-6d %(asctime)s %(levelname)-8s %(message)s', '%Y-%m-%d %H:%M:%S'))
+    logger.addHandler(file)
+
     if verbosity != 'NONE':
         console = logging.StreamHandler()
         console.setLevel(getattr(logging, verbosity))
         console.setFormatter(logging.Formatter('%(relativeCreated)-10d %(module)-18s %(levelname)s: %(message)s'))
-        logging.getLogger('').addHandler(console)
+        logger.addHandler(console)
+
     logging.debug('Logger initiated')
 
 
