@@ -2,6 +2,7 @@ import logging
 import os
 import pprint
 import json
+import jsonschema
 
 from ffmpeg.ffprobe import FFprobeInfoCommand
 from ffmpeg.ffmpeg import FFmpegConvertCommand
@@ -11,11 +12,68 @@ from ffmpeg.inter_prog_solver import FFprobeInterlacedProgressiveSolver
 
 class FfmpegAction:
 
+    PROFILE_SCHEMA = {
+        'title': 'Profile',
+        'type': 'object',
+        'properties': {
+            'inputs': {
+                'title': 'Profile inputs list',
+                'type': 'array',
+                'items': {
+                    'title': 'Profile input',
+                    'type': 'object',
+                    'properties': {
+                        'parameters': {
+                            'title': 'Profile input\'s parameters',
+                            'type': 'array',
+                            'items': {
+                                'title': 'Profile input\'s parameter',
+                                'type': 'string'
+                            }
+                        }
+                    },
+                    'required': ['parameters', ]
+                },
+                'minItems': 1
+            },
+            'outputs': {
+                'title': 'Profile outputs list',
+                'type': 'array',
+                'items': {
+                    'title': 'Profile output',
+                    'type': 'object',
+                    'properties': {
+                        'parameters': {
+                            'title': 'Profile output\'s parameters',
+                            'type': 'array',
+                            'items': {
+                                'title': 'Profile output\'s parameter',
+                                'type': 'string'
+                            }
+                        },
+                        'filename': {
+                            'title': 'Profile output\'s filename',
+                            'type': 'string'
+                        }
+                    },
+                    'required': ['parameters', 'filename', ]
+                },
+                'minItems': 1
+            }
+        },
+        'required': ['inputs', 'outputs']
+    }
+
     def __init__(self, conf: dict, simulate: bool):
         self._conf = conf
         self._simulate = simulate
         logging.debug('Creating FFmpegConvertCommand object...')
         self._ffmpeg_convert = FFmpegConvertCommand(conf['ffmpeg_path'], conf['temp_dir'], simulate)
+
+    @classmethod
+    def _validate_profile(cls, profile_dict: dict):
+        logging.debug('Validating profile...')
+        jsonschema.validate(profile_dict, cls.PROFILE_SCHEMA)
 
     def run(self, input_url: str, action_params: dict, out_dir_path: str):
         logging.debug('Using FFprobe to collect input file parameters...')
@@ -62,6 +120,7 @@ class FfmpegAction:
             profile_dict = json.loads(profile_data)
         except ValueError as e:
             raise ValueError('Profile {} is not a valid JSON document: {}'.format(profile_template_name, str(e)))
+        self._validate_profile(profile_dict)
         logging.debug('Starting FFmpeg conversion...')
         self._ffmpeg_convert.exec(
             [(profile_dict['inputs'][0]['parameters'], input_url)],
