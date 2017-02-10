@@ -74,6 +74,6 @@ class FFprobeInterlacedProgressiveSolver(AbstractInterlacedProgressiveSolver):
                 *collected
             ))
             decision = self._solve(*collected)
-            logging.debug('Stream {} solved as {}'.format(stream_index, self.DECISIONS[decision]))
+            logging.info('Stream {} solved as {}'.format(stream_index, self.DECISIONS[decision]))
             result[stream_index] = decision
         return result

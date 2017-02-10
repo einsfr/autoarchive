@@ -14,7 +14,7 @@ BASE_DIR = os.path.dirname(__file__)
 
 def configure_logger(log_dir: str, log_split: bool, log_level: str, verbosity: str) -> None:
     if log_split:
-        log_file = os.path.join(log_dir, '{}.log'.format(datetime.today().strftime('%Y%m%d%H%M%S')))
+        log_file = os.path.join(log_dir, 'autoarchive-{}.log'.format(datetime.today().strftime('%Y%m%d%H%M%S')))
         file_mode = 'w'
     else:
         log_file = os.path.join(log_dir, 'autoarchive.log')
@@ -38,6 +38,7 @@ def configure_logger(log_dir: str, log_split: bool, log_level: str, verbosity: s
 
 
 if __name__ == '__main__':
+    os.chdir(BASE_DIR)
     args = get_arguments_parser().parse_args()
     conf = get_configuration(args.conf_path)
     configure_logger(conf['log_dir'], args.log_split, args.log_level, args.verbosity)

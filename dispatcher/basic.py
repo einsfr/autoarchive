@@ -143,7 +143,5 @@ class BasicDispatcher:
         errors_count = len(processed_errors)
         if errors_count:
             logging.warning('Finished with {} error(s)'.format(errors_count))
-            for e in processed_errors:
-                logging.warning('"{}": {}'.format(*e))
         else:
             logging.info('Finished without errors')
