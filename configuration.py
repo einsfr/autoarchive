@@ -7,7 +7,7 @@ class ConfigurationException(Exception):
     pass
 
 
-def _validate_configuration(json_content: dict) -> dict:
+def validate_configuration(json_content: dict) -> dict:
 
     def _required(pl: list) -> None:
         for p in pl:
@@ -40,17 +40,5 @@ def _validate_configuration(json_content: dict) -> dict:
 
 
 def get_configuration(path: str) -> dict:
-    try:
-        with open(path) as c_file:
-            configuration = _validate_configuration(json.load(c_file))
-    except FileNotFoundError:
-        sys.stderr.write('Configuration file not found: "{}".'.format(path))
-        sys.exit(1)
-    except ValueError as e:
-        sys.stderr.write('Configuration file "{}" is not a valid JSON document: {}'.format(path, str(e)))
-        sys.exit(1)
-    except ConfigurationException as e:
-        sys.stderr.write(str(e))
-        sys.exit(1)
-    else:
-        return configuration
+    with open(path) as c_file:
+        return validate_configuration(json.load(c_file))

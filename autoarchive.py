@@ -6,7 +6,7 @@ from datetime import datetime
 from traceback import TracebackException
 
 from args import get_arguments_parser
-from configuration import get_configuration
+from configuration import get_configuration, ConfigurationException
 
 
 BASE_DIR = os.path.dirname(__file__)
@@ -40,7 +40,17 @@ def configure_logger(log_dir: str, log_split: bool, log_level: str, verbosity: s
 if __name__ == '__main__':
     os.chdir(BASE_DIR)
     args = get_arguments_parser().parse_args()
-    conf = get_configuration(args.conf_path)
+    try:
+        conf = get_configuration(args.conf_path)
+    except FileNotFoundError:
+        sys.stderr.write('Configuration file not found: "{}".'.format(args.conf_path))
+        sys.exit(1)
+    except ValueError as e:
+        sys.stderr.write('Configuration file "{}" is not a valid JSON document: {}'.format(args.conf_path, str(e)))
+        sys.exit(1)
+    except ConfigurationException as e:
+        sys.stderr.write(str(e))
+        sys.exit(1)
     configure_logger(conf['log_dir'], args.log_split, args.log_level, args.verbosity)
     try:
         args.exec_func(args, conf)
