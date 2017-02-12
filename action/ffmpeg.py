@@ -4,13 +4,14 @@ import pprint
 import json
 import jsonschema
 
+from action import AbstractAction
 from ffmpeg.ffprobe import FFprobeInfoCommand
 from ffmpeg.ffmpeg import FFmpegConvertCommand
 from ffmpeg import jinja_env
 from ffmpeg.inter_prog_solver import FFprobeInterlacedProgressiveSolver
 
 
-class FfmpegAction:
+class FfmpegAction(AbstractAction):
 
     PROFILE_SCHEMA = {
         'title': 'Profile',
@@ -65,17 +66,16 @@ class FfmpegAction:
     }
 
     def __init__(self, conf: dict, simulate: bool):
-        self._conf = conf
-        self._simulate = simulate
+        super().__init__(conf, simulate)
         logging.debug('Creating FFmpegConvertCommand object...')
         self._ffmpeg_convert = FFmpegConvertCommand(conf['ffmpeg_path'], conf['temp_dir'], simulate)
 
     @classmethod
-    def _validate_profile(cls, profile_dict: dict):
+    def _validate_profile(cls, profile_dict: dict) -> None:
         logging.debug('Validating profile...')
         jsonschema.validate(profile_dict, cls.PROFILE_SCHEMA)
 
-    def run(self, input_url: str, action_params: dict, out_dir_path: str):
+    def run(self, input_url: str, action_params: dict, out_dir_path: str) -> None:
         logging.debug('Using FFprobe to collect input file parameters...')
         ffprobe_info = FFprobeInfoCommand(self._conf['ffprobe_path'])
         input_params = ffprobe_info.exec(input_url, show_programs=False)

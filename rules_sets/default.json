@@ -6,6 +6,7 @@
     }],
     [".*\\.mxf$", "ffmpeg", {
       "profile": "reps_progs.json"
-    }]
+    }],
+    [".*\\.docx$", "copy", {}]
   ]
 }

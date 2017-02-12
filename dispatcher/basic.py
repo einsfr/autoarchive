@@ -76,7 +76,7 @@ class BasicDispatcher:
         logging.debug('Matches: {}'.format(patterns))
         for n, p in enumerate(patterns):
             action_id, action_params = p
-            logging.info('Pattern {} of {}: performing "{}" action...'.format(action_id, n + 1, len(patterns)))
+            logging.info('Pattern {} of {}: performing "{}" action...'.format(n + 1, len(patterns), action_id))
             self._get_action(action_id).run(in_path, action_params, out_dir)
 
     def _dispatch_directory(self):
