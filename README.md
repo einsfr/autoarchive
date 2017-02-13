@@ -5,7 +5,18 @@ Automatic batch processor for media archiving purposes written entirely in Pytho
 * JSON
 
 ## Supported actions
+
+
+### Common
+#### copy
+Copies a file to the output folder.
+#### skip
+Simply skips a file (for using with 'warning' or 'error' policies)
+
+
 ### ffmpeg
-Processes a file with ffmpeg. Ffmpeg and ffprobe binaries are required and must be installed separately. See FFmpeg project's official site: [ffmpeg.org](https://ffmpeg.org)). Calls ffprobe to gather input file metadata (width, height, codec, etc...) and [Jinja2](http://jinja.pocoo.org/) template engine to use it in conversion profiles.
-### copy
-Copies file to output folder.
+Processes a file with ffmpeg. Ffmpeg and ffprobe binaries are required and must be installed separately. See FFmpeg project's official site: [ffmpeg.org](https://ffmpeg.org)).
+
+#### ffmpeg.convert
+A format conversion action. Calls ffprobe to gather input file metadata (width, height, codec, etc...) and [Jinja2](http://jinja.pocoo.org/) template engine to use it in conversion profiles.
+
