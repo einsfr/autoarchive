@@ -11,7 +11,7 @@ from ffmpeg import jinja_env
 from ffmpeg.inter_prog_solver import FFprobeInterlacedProgressiveSolver
 
 
-class FfmpegAction(AbstractAction):
+class FfmpegConvertAction(AbstractAction):
 
     PROFILE_SCHEMA = {
         'title': 'Profile',

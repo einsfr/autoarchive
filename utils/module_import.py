@@ -19,6 +19,9 @@ def get_module(module_type: str, module_id: str):
 
 def get_class(module_type: str, module_id: str):
     module = get_module(module_type, module_id)
-    class_name = '{}{}'.format(module_id.capitalize(), ''.join([v.capitalize() for v in module_type.split(' ')]))
+    class_name = '{}{}'.format(
+        ''.join([v.capitalize() for v in module_id.split('.')]),
+        ''.join([v.capitalize() for v in module_type.split(' ')])
+    )
     logging.debug('Trying to get {} class {}...'.format(module_type, class_name))
     return getattr(module, class_name)
