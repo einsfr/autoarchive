@@ -18,6 +18,7 @@ class BasicDispatcher:
         self._input_url = input_url
         self._use_in_dir_as_root = use_in_dir_as_root
         self._simulate = simulate
+        self._no_match_files = []
 
         self._patterns_cache = []
         self._action_cache = {}  # ACTIONS ARE CACHEABLE - DO NOT FORGET IT - THEY'RE USED MORE THAN ONCE
@@ -58,6 +59,7 @@ class BasicDispatcher:
     def _dispatch_file(self):
         self._input_url = os.path.abspath(self._input_url)
         self._dispatch_file_dir_common(self._input_url, self._conf['out_dir'])
+        self._show_no_matches_warning()
 
     def _dispatch_file_dir_common(self, in_path: str, out_dir: str):
         logging.info('Searching for matching patterns in rules set for "{}"...'.format(in_path))
@@ -67,7 +69,7 @@ class BasicDispatcher:
             if self._policy == 'skip':
                 return
             elif self._policy == 'warning':
-                logging.warning('No matches were found for "{}"'.format(in_path))
+                self._no_match_files.append(in_path)
             elif self._policy == 'error':
                 raise PolicyViolationException('No matches were found for "{}"'.format(in_path))
             else:
@@ -78,6 +80,15 @@ class BasicDispatcher:
             action_id, action_params = p
             logging.info('Pattern {} of {}: performing "{}" action...'.format(n + 1, len(patterns), action_id))
             self._get_action(action_id).run(in_path, action_params, out_dir)
+
+    def _show_no_matches_warning(self):
+        if self._policy == 'warning' and self._no_match_files:
+            logging.warning(
+                'Matching patterns were not found for these files ({}):\r\n{}'.format(
+                    len(self._no_match_files),
+                    '\r\n'.join(self._no_match_files)
+                )
+            )
 
     def _dispatch_directory(self):
         self._input_url = os.path.abspath(self._input_url)
@@ -103,10 +114,6 @@ class BasicDispatcher:
 
         processed_files_count = 0
         processed_errors = []
-        if self._dir_depth < 0:
-            logging.debug('Creating output directory "{}"...'.format(out_base_dir))
-            if not self._simulate:
-                os.makedirs(out_base_dir, exist_ok=True)
         for d in dir_list:
             if self._dir_depth > 0:
                 path = d['dir']
@@ -125,9 +132,6 @@ class BasicDispatcher:
                         out_dir = os.path.join(out_base_dir, *path_list[::-1])
                     else:
                         out_dir = os.path.join(out_base_dir, *path_list[:-self._dir_depth - 1:-1])
-                    logging.debug('Creating output directory "{}"...'.format(out_dir))
-                    if not self._simulate:
-                        os.makedirs(out_dir, exist_ok=True)
             else:
                 out_dir = out_base_dir
             for f in d['files']:
@@ -140,6 +144,7 @@ class BasicDispatcher:
                     raise e
                 except Exception as e:
                     processed_errors.append((input_path, e))
+        self._show_no_matches_warning()
         errors_count = len(processed_errors)
         if errors_count:
             logging.warning('Finished with {} error(s)'.format(errors_count))

@@ -38,6 +38,7 @@ def validate_rules_set(rules_set: dict):
                             'type': 'object'
                         }
                     ],
+                    'minItems': 3,
                     'additionalItems': False
                 },
                 'minItems': 1

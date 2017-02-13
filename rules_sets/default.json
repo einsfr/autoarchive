@@ -1,12 +1,14 @@
 {
   "policy": "warning",
   "patterns": [
+    [".*", "skip", {}],
     [".*\\d{3}_\\d{4}_\\d{2}\\.mp4$", "ffmpeg.convert", {
       "profile": "xdcam.json"
     }],
     [".*\\.mxf$", "ffmpeg.convert", {
       "profile": "reps_progs.json"
     }],
-    [".*\\.docx$", "copy", {}]
+    [".*\\.docx$", "copy", {}],
+    [".*\\.(?:xml|smi|ppn|bim|db)", "skip", {}]
   ]
 }

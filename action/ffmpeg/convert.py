@@ -76,6 +76,7 @@ class FfmpegConvertAction(AbstractAction):
         jsonschema.validate(profile_dict, cls.PROFILE_SCHEMA)
 
     def run(self, input_url: str, action_params: dict, out_dir_path: str) -> None:
+        super().run(input_url, action_params, out_dir_path)
         logging.debug('Using FFprobe to collect input file parameters...')
         ffprobe_info = FFprobeInfoCommand(self._conf['ffprobe_path'])
         input_params = ffprobe_info.exec(input_url, show_programs=False)
