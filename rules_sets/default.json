@@ -2,10 +2,10 @@
   "policy": "warning",
   "patterns": [
     [".*\\d{3}_\\d{4}_\\d{2}\\.mp4$", {}, "ffmpeg.convert", {
-      "profile": "xdcam.json"
+      "profile": "x264_itff_422_amix+aac_audio.json"
     }],
     [".*\\.mxf$", {}, "ffmpeg.convert", {
-      "profile": "reps_progs.json"
+      "profile": "x264_itff_422.json"
     }],
     [".*\\.docx$", {}, "copy", {}],
     [".*\\.(?:xml|smi|ppn|bim|db)", {}, "skip", {}]
