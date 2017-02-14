@@ -89,10 +89,3 @@ class FFprobeInfoCommand(FFprobeBaseCommand):
         args.append(in_url)
 
         return self._exec(args)
-
-
-class FFprobeFileInfoCollector:
-
-    def __init__(self, bin_path: str, timeout: int=5):
-        self._bin_path = bin_path
-        self._timeout = timeout
