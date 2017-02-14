@@ -35,6 +35,9 @@ def validate_rules_set(rules_set: dict):
                             'properties': {
                                 'passthrough': {
                                     'type': 'boolean'
+                                },
+                                'filters': {
+                                    'type': 'object'
                                 }
                             },
                             'additionalProperties': False

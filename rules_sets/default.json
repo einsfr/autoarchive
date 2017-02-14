@@ -1,7 +1,13 @@
 {
   "policy": "warning",
   "patterns": [
-    [".*\\d{3}_\\d{4}_\\d{2}\\.mp4$", {}, "ffmpeg.convert", {
+    [".*\\d{3}_\\d{4}_\\d{2}\\.mp4$", {
+      "filters": {
+        "ffprobe": {
+
+        }
+      }
+    }, "ffmpeg.convert", {
       "profile": "x264_itff_422_amix+aac_audio.json"
     }],
     [".*\\.mxf$", {}, "ffmpeg.convert", {
