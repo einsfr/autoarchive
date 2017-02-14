@@ -30,6 +30,16 @@ def validate_rules_set(rules_set: dict):
                             'type': 'string'
                         },
                         {
+                            'title': 'Pattern\'s options',
+                            'type': 'object',
+                            'properties': {
+                                'passthrough': {
+                                    'type': 'boolean'
+                                }
+                            },
+                            'additionalProperties': False
+                        },
+                        {
                             'title': 'Pattern\'s action name',
                             'type': 'string'
                         },

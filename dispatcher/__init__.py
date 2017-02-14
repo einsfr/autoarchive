@@ -7,3 +7,7 @@ def get_dispatcher_class(disp_id: str):
 
 class PolicyViolationException(RuntimeError):
     pass
+
+
+class ActionRunException(RuntimeError):
+    pass

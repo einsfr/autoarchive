@@ -7,7 +7,8 @@ import subprocess
 from collections import deque
 from datetime import datetime
 
-from ffmpeg.exceptions import FFmpegProcessException, FFmpegBinaryNotFound
+from ffmpeg.exceptions import FFmpegProcessException, FFmpegBinaryNotFound, FFmpegInputNotFoundException, \
+    FFmpegOutputAlreadyExistsException
 
 
 class FFmpegBaseCommand:
@@ -55,7 +56,7 @@ class FFmpegConvertCommand(FFmpegBaseCommand):
         logging.info('Removing temporary files...')
         for t in tmp_paths:
             if os.path.exists(t):
-                logging.debug('Found: "{}" - removing...')
+                logging.debug('Found: "{}" - removing...'.format(t))
                 os.remove(t)
         raise FFmpegProcessException(
             'FFmpeg exit code {}.\r\nLast output: {}\r\nRaised exception: {}'.format(
@@ -77,7 +78,7 @@ class FFmpegConvertCommand(FFmpegBaseCommand):
             if not os.path.isfile(in_url):
                 msg = 'Input file not found: "{}"'.format(in_url)
                 logging.error(msg)
-                raise FileNotFoundError(msg)
+                raise FFmpegInputNotFoundException(msg)
             in_args.append('-i')
             in_args.append(in_url)
             logging.debug('Extending args with {}'.format(in_args))
@@ -90,7 +91,7 @@ class FFmpegConvertCommand(FFmpegBaseCommand):
             if os.path.exists(out_path):
                 msg = 'Output file "{}" already exists'.format(out_path)
                 logging.error(msg)
-                raise FileExistsError(msg)
+                raise FFmpegOutputAlreadyExistsException(msg)
             out_ext = os.path.splitext(os.path.split(out_path)[1])[1]
             tmp_path = os.path.join(self._tmp_dir, '{}{}'.format(str(uuid.uuid4()), out_ext))
             output_mapping.append((tmp_path, out_path))

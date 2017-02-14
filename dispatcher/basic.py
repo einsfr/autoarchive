@@ -4,7 +4,7 @@ import re
 import pprint
 
 from action import get_action_class
-from dispatcher import PolicyViolationException
+from dispatcher import PolicyViolationException, ActionRunException
 
 
 class BasicDispatcher:
@@ -37,15 +37,15 @@ class BasicDispatcher:
 
     def _fill_patterns_cache(self):
         self._patterns_cache = []
-        for reg_exp, action, action_params in self._patterns:
-            self._patterns_cache.append((re.compile(reg_exp, re.IGNORECASE), action, action_params))
+        for reg_exp, *p in self._patterns:
+            self._patterns_cache.append((re.compile(reg_exp, re.IGNORECASE), reg_exp, *p))
 
     def _get_matching_patterns(self, in_path: str) -> list:
         if not self._patterns_cache:
             logging.debug('Filling rules set patterns cache...')
             self._fill_patterns_cache()
             logging.debug('Rules set patterns cache:\r\n{}'.format(pprint.pformat(self._patterns_cache)))
-        return [(a, ap) for r, a, ap in self._patterns_cache if r.match(in_path) is not None]
+        return [p for r, *p in self._patterns_cache if r.match(in_path) is not None]
 
     def _get_action(self, action_id: str):
         try:
@@ -59,7 +59,7 @@ class BasicDispatcher:
     def _dispatch_file(self):
         self._input_url = os.path.abspath(self._input_url)
         self._dispatch_file_dir_common(self._input_url, self._conf['out_dir'])
-        self._show_no_matches_warning()
+        self._no_matches_warning()
 
     def _dispatch_file_dir_common(self, in_path: str, out_dir: str):
         logging.info('Searching for matching patterns in rules set for "{}"...'.format(in_path))
@@ -74,14 +74,37 @@ class BasicDispatcher:
                 raise PolicyViolationException('No matches were found for "{}"'.format(in_path))
             else:
                 raise ValueError('Unknown policy: {}'.format(self._policy))
-        logging.info('Found {} matching pattern(s)'.format(len(patterns)))
         logging.debug('Matches: {}'.format(patterns))
-        for n, p in enumerate(patterns):
-            action_id, action_params = p
-            logging.info('Pattern {} of {}: performing "{}" action...'.format(n + 1, len(patterns), action_id))
-            self._get_action(action_id).run(in_path, action_params, out_dir)
+        filtered_patterns = self._filter_patterns(patterns)
+        for n, p in enumerate(filtered_patterns):
+            action_id = p[2]
+            action_params = p[3]
+            logging.info(
+                'Pattern {} of {}: performing action: {}; action parameters: {}...'.format(
+                    n + 1, len(filtered_patterns), action_id, action_params
+                )
+            )
+            action = self._get_action(action_id)
+            logging.debug('Using action object {}'.format(action))
+            action.run(in_path, action_params, out_dir)
 
-    def _show_no_matches_warning(self):
+    def _filter_patterns(self, patterns: list) -> list:
+        result = None
+        for n, p in enumerate(patterns):
+            pattern_opts = p[1]
+            try:
+                if not pattern_opts['passthrough']:
+                    result = patterns[:n + 1]
+                    break
+            except KeyError:
+                pass
+        if result is None:
+            result = patterns
+        else:
+            logging.debug('Matches after filtering: {}'.format(result))
+        return result
+
+    def _no_matches_warning(self):
         if self._policy == 'warning' and self._no_match_files:
             logging.warning(
                 'Matching patterns were not found for these files ({}):\r\n{}'.format(
@@ -102,7 +125,6 @@ class BasicDispatcher:
         dir_list = []
         input_root_len = len(self._input_url)
         for path, dirs, files in os.walk(self._input_url):
-            logging.debug('Path: {} Dirs: {} Files: {}'.format(path, dirs, files))
             if len(files):
                 dir_list.append({'dir': path[input_root_len + 1:], 'files': files})
 
@@ -142,11 +164,14 @@ class BasicDispatcher:
                     self._dispatch_file_dir_common(input_path, out_dir)
                 except PolicyViolationException as e:
                     raise e
-                except Exception as e:
+                except ActionRunException as e:
                     processed_errors.append((input_path, e))
-        self._show_no_matches_warning()
+        self._no_matches_warning()
         errors_count = len(processed_errors)
         if errors_count:
-            logging.warning('Finished with {} error(s)'.format(errors_count))
+            logging.warning('Finished with {} error(s):\r\n{}'.format(
+                errors_count,
+                '\r\n'.join(['{}: {} {}'.format(pe[0], type(pe[1]), str(pe[1])) for pe in processed_errors])
+            ))
         else:
             logging.info('Finished without errors')
