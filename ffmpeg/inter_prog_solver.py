@@ -1,8 +1,7 @@
 import logging
-import hashlib
-from collections import OrderedDict
 
 from ffmpeg.ffprobe import FFprobeFrameCommand
+from utils.cache import HashCacheMixin, CacheMissException
 
 
 class AbstractInterlacedProgressiveSolver:
@@ -19,30 +18,17 @@ class AbstractInterlacedProgressiveSolver:
         IS_PROGRESSIVE: 'PROGRESSIVE'
     }
 
-    CACHE_SIZE = 10
-
-    def __init__(self):
-        self._cache = OrderedDict()
-
     def solve(self, input_url: str, video_stream_count: int) -> dict:
         raise NotImplementedError
 
 
-class FFprobeInterlacedProgressiveSolver(AbstractInterlacedProgressiveSolver):
+class FFprobeInterlacedProgressiveSolver(HashCacheMixin, AbstractInterlacedProgressiveSolver):
 
     READ_INTERVALS = '%+#10'
 
     def __init__(self, conf: dict):
-        super().__init__()
+        super().__init__(cache_size=10)
         self._conf = conf
-
-    def _to_cache(self, hash_id: str, item):
-        self._cache[hash_id] = item
-        if len(self._cache) > self.CACHE_SIZE:
-            self._cache.popitem(last=False)
-
-    def _from_cache(self, hash_id: str):
-        return self._cache[hash_id]
 
     def _solve(self, total_count: int, tff_counf: int, bff_count: int, progressive_count: int) -> int:
         if tff_counf == total_count:
@@ -75,15 +61,12 @@ class FFprobeInterlacedProgressiveSolver(AbstractInterlacedProgressiveSolver):
     def solve(self, input_url: str, video_stream_count: int) -> dict:
         if video_stream_count == 0:
             raise ValueError('Input must have at least one video stream')
-        input_hash = hashlib.sha1(input_url.encode()).hexdigest()
         try:
-            cached_value = self._from_cache(input_hash)
-        except KeyError:
-            logging.debug('Solver cache miss')
+            result = self.from_cache(input_url)
+        except CacheMissException:
             pass
         else:
-            logging.debug('Solver cache hit')
-            return cached_value
+            return result
         logging.info('Decoding some frames to determine video streams field mode...')
         ffprobe_frame = FFprobeFrameCommand(self._conf['ffprobe_path'])
         result = {}
@@ -101,5 +84,5 @@ class FFprobeInterlacedProgressiveSolver(AbstractInterlacedProgressiveSolver):
             decision = self._solve(*collected)
             logging.info('Stream {} determined as {}'.format(stream_index, self.DECISIONS[decision]))
             result[stream_index] = decision
-        self._to_cache(input_hash, result)
+        self.to_cache(input_url, result)
         return result
