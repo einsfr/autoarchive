@@ -28,10 +28,10 @@ class HashCacheMixin:
         try:
             value = self._cache[self.get_hashed_id(item_id)]
         except KeyError:
-            logging.debug('Cache miss')
+            logging.debug('{} cache miss'.format(self.__class__.__name__))
             raise CacheMissException
         else:
-            logging.debug('Cache hit')
+            logging.debug('{} cache hit'.format(self.__class__.__name__))
             return value
 
     def cache_stats(self):
