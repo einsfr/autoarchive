@@ -62,7 +62,7 @@ class FFprobeInterlacedProgressiveSolver(HashCacheMixin, AbstractInterlacedProgr
         if video_stream_count == 0:
             raise ValueError('Input must have at least one video stream')
         try:
-            result = self.from_cache(input_url)
+            result = self._from_cache(input_url)
         except CacheMissException:
             pass
         else:
@@ -84,5 +84,5 @@ class FFprobeInterlacedProgressiveSolver(HashCacheMixin, AbstractInterlacedProgr
             decision = self._solve(*collected)
             logging.info('Stream {} determined as {}'.format(stream_index, self.DECISIONS[decision]))
             result[stream_index] = decision
-        self.to_cache(input_url, result)
+        self._to_cache(input_url, result)
         return result

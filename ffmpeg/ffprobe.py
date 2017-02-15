@@ -24,7 +24,7 @@ class FFprobeBaseCommand(HashCacheMixin):
     def _exec(self, args: list) -> dict:
         cache_id = ''.join(args)
         try:
-            cached_value = self.from_cache(cache_id)
+            cached_value = self._from_cache(cache_id)
         except CacheMissException:
             pass
         else:
@@ -41,7 +41,7 @@ class FFprobeBaseCommand(HashCacheMixin):
             logging.debug('FFprobe done')
             try:
                 result = json.loads(proc.stdout)
-                self.to_cache(cache_id, result)
+                self._to_cache(cache_id, result)
                 return result
             except ValueError as e:
                 logging.error('FFprobe\'s stdout decoding error: {}'.format(str(e)))
