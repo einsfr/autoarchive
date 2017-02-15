@@ -1,7 +1,7 @@
 import logging
 
 from ffmpeg.ffprobe import FFprobeFrameCommand
-from utils.cache import HashCacheMixin, CacheMissException
+from utils.cache import HashCache, CacheMissException
 
 
 class AbstractInterlacedProgressiveSolver:
@@ -22,14 +22,14 @@ class AbstractInterlacedProgressiveSolver:
         raise NotImplementedError
 
 
-class FFprobeInterlacedProgressiveSolver(HashCacheMixin, AbstractInterlacedProgressiveSolver):
+class FFprobeInterlacedProgressiveSolver(AbstractInterlacedProgressiveSolver):
 
     READ_INTERVALS = '%+#10'
 
     def __init__(self, conf: dict):
-        super().__init__(cache_size=10)
         self._conf = conf
         self._ffprobe_frame_cmd = FFprobeFrameCommand(conf['ffprobe_path'])
+        self._cache = HashCache(cache_size=10)
 
     def _solve(self, total_count: int, tff_counf: int, bff_count: int, progressive_count: int) -> int:
         if tff_counf == total_count:
@@ -62,7 +62,7 @@ class FFprobeInterlacedProgressiveSolver(HashCacheMixin, AbstractInterlacedProgr
     def solve(self, input_url: str, video_stream_number: int) -> int:
         cache_id = '{}{}'.format(input_url, video_stream_number)
         try:
-            result = self._from_cache(cache_id)
+            result = self._cache.from_cache(cache_id)
         except CacheMissException:
             pass
         else:
@@ -79,5 +79,5 @@ class FFprobeInterlacedProgressiveSolver(HashCacheMixin, AbstractInterlacedProgr
         ))
         decision = self._solve(*collected)
         logging.info('Stream determined as {}'.format(self.DECISIONS[decision]))
-        self._to_cache(cache_id, decision)
+        self._cache.to_cache(cache_id, decision)
         return decision

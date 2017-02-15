@@ -1,5 +1,4 @@
 import hashlib
-import logging
 from collections import OrderedDict
 
 
@@ -7,9 +6,9 @@ class CacheMissException(RuntimeWarning):
     pass
 
 
-class HashCacheMixin:
+class HashCache:
 
-    def __init__(self, *args, cache_size: int, **kwargs):
+    def __init__(self, cache_size: int):
         self._cache = OrderedDict()
         self._cache_size = cache_size
         self._cache_hits = 0
@@ -19,19 +18,17 @@ class HashCacheMixin:
     def _get_hashed_id(item_id: str) -> str:
         return hashlib.sha1(item_id.encode()).hexdigest()
 
-    def _to_cache(self, item_id: str, item):
+    def to_cache(self, item_id: str, item):
         self._cache[self._get_hashed_id(item_id)] = item
         if len(self._cache) > self._cache_size:
             self._cache.popitem(last=False)
 
-    def _from_cache(self, item_id: str):
+    def from_cache(self, item_id: str):
         try:
             value = self._cache[self._get_hashed_id(item_id)]
         except KeyError:
-            logging.debug('{} cache miss'.format(self.__class__.__name__))
             raise CacheMissException
         else:
-            logging.debug('{} cache hit'.format(self.__class__.__name__))
             return value
 
     def cache_stats(self):

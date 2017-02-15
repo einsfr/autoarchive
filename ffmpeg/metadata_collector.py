@@ -1,7 +1,7 @@
 import logging
 import os
 
-from utils.cache import HashCacheMixin, CacheMissException
+from utils.cache import HashCache, CacheMissException
 from ffmpeg.ffprobe import FFprobeInfoCommand
 from ffmpeg.inter_prog_solver import FFprobeInterlacedProgressiveSolver
 
@@ -87,20 +87,20 @@ class FFprobeMetadataResult:
         }
 
 
-class FFprobeMetadataCollector(HashCacheMixin):
+class FFprobeMetadataCollector:
 
     def __init__(self, conf: dict, timeout: int=5):
-        super().__init__(cache_size=10)
         self._conf = conf
         self._timeout = timeout
         logging.debug('Creating FFprobeInfoCommand object...')
         self._ffprobe_info = FFprobeInfoCommand(self._conf['ffprobe_path'])
         logging.debug('Creating FFprobeInterlacedProgressiveSolver object...')
         self._int_prog_solver = FFprobeInterlacedProgressiveSolver(self._conf)
+        self._cache = HashCache(cache_size=10)
 
     def get_metadata(self, input_url: str) -> FFprobeMetadataResult:
         try:
-            cached_value = self._from_cache(input_url)
+            cached_value = self._cache.from_cache(input_url)
         except CacheMissException:
             pass
         else:
@@ -111,5 +111,5 @@ class FFprobeMetadataCollector(HashCacheMixin):
             self._ffprobe_info.exec(input_url, show_programs=False),
             self._int_prog_solver
         )
-        self._to_cache(input_url, result)
+        self._cache.to_cache(input_url, result)
         return result

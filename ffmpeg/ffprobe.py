@@ -4,15 +4,14 @@ import subprocess
 import json
 
 from ffmpeg.exceptions import FFprobeTerminatedException, FFprobeProcessException, FFprobeBinaryNotFound
-from utils.cache import HashCacheMixin, CacheMissException
+from utils.cache import HashCache, CacheMissException
 
 
-class FFprobeBaseCommand(HashCacheMixin):
+class FFprobeBaseCommand:
 
     DEFAULT_ARGS = ['-hide_banner', '-of', 'json']
 
     def __init__(self, bin_path: str, timeout: int=5):
-        super().__init__(cache_size=10)
         bin_path = os.path.abspath(bin_path)
         if not (os.path.isfile(bin_path) and os.access(bin_path, os.X_OK)):
             msg = 'FFprobe binary not found: "{}"'.format(bin_path)
@@ -20,11 +19,12 @@ class FFprobeBaseCommand(HashCacheMixin):
             raise FFprobeBinaryNotFound(msg)
         self._bin_path = bin_path
         self._timeout = timeout
+        self._cache = HashCache(cache_size=10)
 
     def _exec(self, args: list) -> dict:
         cache_id = ''.join(args)
         try:
-            cached_value = self._from_cache(cache_id)
+            cached_value = self._cache.from_cache(cache_id)
         except CacheMissException:
             pass
         else:
@@ -41,7 +41,7 @@ class FFprobeBaseCommand(HashCacheMixin):
             logging.debug('FFprobe done')
             try:
                 result = json.loads(proc.stdout)
-                self._to_cache(cache_id, result)
+                self._cache.to_cache(cache_id, result)
                 return result
             except ValueError as e:
                 logging.error('FFprobe\'s stdout decoding error: {}'.format(str(e)))
