@@ -18,7 +18,7 @@ class AbstractInterlacedProgressiveSolver:
         IS_PROGRESSIVE: 'PROGRESSIVE'
     }
 
-    def solve(self, input_url: str, video_stream_count: int) -> dict:
+    def solve(self, input_url: str, video_stream_number: int) -> int:
         raise NotImplementedError
 
 
@@ -29,6 +29,7 @@ class FFprobeInterlacedProgressiveSolver(HashCacheMixin, AbstractInterlacedProgr
     def __init__(self, conf: dict):
         super().__init__(cache_size=10)
         self._conf = conf
+        self._ffprobe_frame_cmd = FFprobeFrameCommand(conf['ffprobe_path'])
 
     def _solve(self, total_count: int, tff_counf: int, bff_count: int, progressive_count: int) -> int:
         if tff_counf == total_count:
@@ -58,31 +59,25 @@ class FFprobeInterlacedProgressiveSolver(HashCacheMixin, AbstractInterlacedProgr
                     progressive_count += 1
         return total_count, tff_count, bff_count, progressive_count
 
-    def solve(self, input_url: str, video_stream_count: int) -> dict:
-        if video_stream_count == 0:
-            raise ValueError('Input must have at least one video stream')
+    def solve(self, input_url: str, video_stream_number: int) -> int:
+        cache_id = '{}{}'.format(input_url, video_stream_number)
         try:
-            result = self._from_cache(input_url)
+            result = self._from_cache(cache_id)
         except CacheMissException:
             pass
         else:
             return result
-        logging.info('Decoding some frames to determine video streams field mode...')
-        ffprobe_frame = FFprobeFrameCommand(self._conf['ffprobe_path'])
-        result = {}
-        for n in range(0, video_stream_count):
-            v_frame_list = ffprobe_frame.exec(
-                input_url,
-                'v:{}'.format(n),
-                self.READ_INTERVALS
-            )['frames']
-            stream_index = v_frame_list[0]['stream_index']
-            collected = self._collect(v_frame_list)
-            logging.debug('FFprobe result: total - {}, tff count - {}, bff count - {}, progressive count - {}'.format(
-                *collected
-            ))
-            decision = self._solve(*collected)
-            logging.info('Stream {} determined as {}'.format(stream_index, self.DECISIONS[decision]))
-            result[stream_index] = decision
-        self._to_cache(input_url, result)
-        return result
+        logging.info('Decoding some frames to determine video stream field mode...')
+        v_frame_list = self._ffprobe_frame_cmd.exec(
+            input_url,
+            'v:{}'.format(video_stream_number),
+            self.READ_INTERVALS
+        )['frames']
+        collected = self._collect(v_frame_list)
+        logging.debug('FFprobe result: total - {}, tff count - {}, bff count - {}, progressive count - {}'.format(
+            *collected
+        ))
+        decision = self._solve(*collected)
+        logging.info('Stream determined as {}'.format(self.DECISIONS[decision]))
+        self._to_cache(cache_id, decision)
+        return decision
