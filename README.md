@@ -1,7 +1,7 @@
 # autoarchive
 Automatic batch processor for media archiving purposes written entirely in Python (>=3.5). Parses input file
 or directory and performs some action (one or many) with every file found according to rules set. Each rule in rules set
-contains a regular expression (for input filename match checking), an action name and some action parameters.
+contains a regular expression (for input filename match checking), an action name and some action and pattern parameters - some additional metadata filtering rules, for example.
 
 ## Supported rules set formats
 * JSON
