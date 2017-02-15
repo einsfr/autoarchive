@@ -3,8 +3,10 @@
   "patterns": [
     [".*\\d{3}_\\d{4}_\\d{2}\\.mp4$", {
       "filters": {
-        "ffprobe": {
-
+        "metadata": {
+          "stream:v:0": {
+            "field_mode": 0
+          }
         }
       }
     }, "ffmpeg.convert", {
