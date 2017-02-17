@@ -2,9 +2,10 @@ import logging
 
 from ffmpeg.ffprobe import FFprobeFrameCommand
 from utils.cache import HashCache, CacheMissException
+from ffmpeg import get_ffmpeg_factory
 
 
-class AbstractInterlacedProgressiveSolver:
+class AbstractFieldModeSolver:
 
     IS_MIXED_OR_UNKNOWN = 0
     IS_INTERLACED_TFF = 1
@@ -22,13 +23,12 @@ class AbstractInterlacedProgressiveSolver:
         raise NotImplementedError
 
 
-class FFprobeInterlacedProgressiveSolver(AbstractInterlacedProgressiveSolver):
+class FFprobeFieldModeSolver(AbstractFieldModeSolver):
 
     READ_INTERVALS = '%+#10'
 
-    def __init__(self, conf: dict):
-        self._conf = conf
-        self._ffprobe_frame_cmd = FFprobeFrameCommand(conf['ffprobe_path'])
+    def __init__(self):
+        self._ffprobe_frame_cmd = get_ffmpeg_factory().get_ffprobe_command(FFprobeFrameCommand)
         self._cache = HashCache(cache_size=10)
 
     def _solve(self, total_count: int, tff_counf: int, bff_count: int, progressive_count: int) -> int:

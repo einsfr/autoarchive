@@ -5,7 +5,7 @@ import sys
 from datetime import datetime
 from traceback import TracebackException
 
-from args import get_arguments_parser
+from args import get_args
 from configuration import get_configuration, ConfigurationException
 
 
@@ -39,9 +39,9 @@ def configure_logger(log_dir: str, log_split: bool, log_level: str, verbosity: s
 
 if __name__ == '__main__':
     os.chdir(BASE_DIR)
-    args = get_arguments_parser().parse_args()
+    args = get_args()
     try:
-        conf = get_configuration(args.conf_path)
+        conf = get_configuration()
     except FileNotFoundError:
         sys.stderr.write('Configuration file not found: "{}".'.format(args.conf_path))
         sys.exit(1)

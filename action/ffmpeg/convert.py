@@ -9,6 +9,7 @@ from ffmpeg.ffmpeg import FFmpegConvertCommand
 from ffmpeg import jinja_env
 from ffmpeg import exceptions as ffmpeg_exceptions
 from ffmpeg.metadata_collector import FFprobeMetadataCollector
+from ffmpeg import get_ffmpeg_factory
 
 
 class FfmpegConvertAction(OutDirCreatingAction):
@@ -67,10 +68,11 @@ class FfmpegConvertAction(OutDirCreatingAction):
 
     def __init__(self, conf: dict, simulate: bool):
         super().__init__(conf, simulate)
-        logging.debug('Creating FFmpegConvertCommand object...')
-        self._ffmpeg_convert = FFmpegConvertCommand(conf['ffmpeg_path'], conf['temp_dir'], simulate)
-        logging.debug('Creating FFmpegMetadataCollector object...')
-        self._ffmpeg_meta_collector = FFprobeMetadataCollector(conf)
+        _factory = get_ffmpeg_factory()
+        logging.debug('Fetching FFmpegConvertCommand object...')
+        self._ffmpeg_convert = _factory.get_ffmpeg_command(FFmpegConvertCommand)
+        logging.debug('Fetching FFmpegMetadataCollector object...')
+        self._ffmpeg_meta_collector = _factory.get_ffprobe_metadata_collector(FFprobeMetadataCollector)
 
     @classmethod
     def _validate_profile(cls, profile_dict: dict) -> None:

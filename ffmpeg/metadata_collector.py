@@ -3,12 +3,13 @@ import os
 
 from utils.cache import HashCache, CacheMissException
 from ffmpeg.ffprobe import FFprobeInfoCommand
-from ffmpeg.inter_prog_solver import FFprobeInterlacedProgressiveSolver
+from ffmpeg.field_mode_solver import FFprobeFieldModeSolver
+from ffmpeg import get_ffmpeg_factory
 
 
 class FFprobeMetadataResult:
 
-    def __init__(self, input_url: str, info: dict, int_prog_solver: FFprobeInterlacedProgressiveSolver):
+    def __init__(self, input_url: str, info: dict, int_prog_solver: FFprobeFieldModeSolver):
         self._input_url = input_url
         self._info = info
         self._int_prog_solver = int_prog_solver
@@ -89,13 +90,12 @@ class FFprobeMetadataResult:
 
 class FFprobeMetadataCollector:
 
-    def __init__(self, conf: dict, timeout: int=5):
-        self._conf = conf
-        self._timeout = timeout
-        logging.debug('Creating FFprobeInfoCommand object...')
-        self._ffprobe_info = FFprobeInfoCommand(self._conf['ffprobe_path'])
-        logging.debug('Creating FFprobeInterlacedProgressiveSolver object...')
-        self._int_prog_solver = FFprobeInterlacedProgressiveSolver(self._conf)
+    def __init__(self):
+        factory = get_ffmpeg_factory()
+        logging.debug('Fetching FFprobeInfoCommand object...')
+        self._ffprobe_info = factory.get_ffprobe_command(FFprobeInfoCommand)
+        logging.debug('Fetching FFprobeFieldModeSolver object...')
+        self._int_prog_solver = factory.get_ffprobe_field_mode_solver(FFprobeFieldModeSolver)
         self._cache = HashCache(cache_size=10)
 
     def get_metadata(self, input_url: str) -> FFprobeMetadataResult:

@@ -1,6 +1,5 @@
-import os
 import json
-import sys
+import os
 
 
 class ConfigurationException(Exception):
@@ -38,7 +37,19 @@ def validate_configuration(json_content: dict) -> dict:
 
     return dict([(k, json_content[k]) for k in params])
 
+_conf = None
 
-def get_configuration(path: str) -> dict:
+
+def get_configuration() -> dict:
+    global _conf
+    if _conf is None:
+        _conf = validate_configuration(_get_configuration())
+    return _conf
+
+
+def _get_configuration():  # may be reimplemented
+    from args import get_args
+
+    path = get_args().conf_path
     with open(path) as c_file:
-        return validate_configuration(json.load(c_file))
+        return json.load(c_file)

@@ -3,7 +3,7 @@ import argparse
 import commands
 
 
-def get_arguments_parser() -> argparse.ArgumentParser:
+def _get_arguments_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-v', '--verbosity',
@@ -82,3 +82,12 @@ def get_arguments_parser() -> argparse.ArgumentParser:
     )
 
     return parser
+
+_args = None
+
+
+def get_args():
+    global _args
+    if _args is None:
+        _args = _get_arguments_parser().parse_args()
+    return _args
