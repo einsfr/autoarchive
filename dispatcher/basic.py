@@ -5,20 +5,24 @@ import pprint
 
 from action import get_action_class
 from dispatcher import PolicyViolationException, ActionRunException
+from args import get_args
+from configuration import get_configuration
 
 
 class BasicDispatcher:
 
-    def __init__(self, conf: dict, rules_set: dict, input_url: str, dir_depth: int, use_in_dir_as_root: bool,
-                 simulate: bool, **kwargs):
-        self._conf = conf
+    def __init__(self, rules_set: dict):
         self._patterns = rules_set['patterns']
         self._policy = rules_set['policy']
-        self._dir_depth = dir_depth
-        self._input_url = input_url
-        self._use_in_dir_as_root = use_in_dir_as_root
-        self._simulate = simulate
         self._no_match_files = []
+
+        self._conf_out_dir = get_configuration()['out_dir']
+
+        args = get_args()
+        self._dir_depth = args.dir_depth
+        self._use_in_dir_as_root = args.use_in_dir_as_root
+        self._simulate = args.simulate
+        self._input_url = args.input_url
 
         self._patterns_cache = []
         self._action_cache = {}  # ACTIONS ARE CACHEABLE - DO NOT FORGET IT - THEY'RE USED MORE THAN ONCE
@@ -52,13 +56,13 @@ class BasicDispatcher:
             return self._action_cache[action_id]
         except KeyError:
             logging.debug('Action cache miss - importing {}...'.format(action_id))
-            action = get_action_class(action_id)(self._conf, self._simulate)
+            action = get_action_class(action_id)()
             self._action_cache[action_id] = action
             return action
 
     def _dispatch_file(self):
         self._input_url = os.path.abspath(self._input_url)
-        self._dispatch_file_dir_common(self._input_url, self._conf['out_dir'])
+        self._dispatch_file_dir_common(self._input_url, self._conf_out_dir)
         self._no_matches_warning()
 
     def _dispatch_file_dir_common(self, in_path: str, out_dir: str):
@@ -117,9 +121,9 @@ class BasicDispatcher:
         self._input_url = os.path.abspath(self._input_url)
         if self._use_in_dir_as_root:
             logging.debug('Including input directory to output path...')
-            out_base_dir = os.path.join(self._conf['out_dir'], os.path.split(self._input_url)[1])
+            out_base_dir = os.path.join(self._conf_out_dir, os.path.split(self._input_url)[1])
         else:
-            out_base_dir = self._conf['out_dir']
+            out_base_dir = self._conf_out_dir
 
         logging.debug('Building file list...')
         dir_list = []

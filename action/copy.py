@@ -3,6 +3,7 @@ import os
 import shutil
 
 from action import OutDirCreatingAction
+from args import get_args
 
 
 class CopyAction(OutDirCreatingAction):
@@ -11,6 +12,6 @@ class CopyAction(OutDirCreatingAction):
         super().run(input_url, action_params, out_dir_path)
         out_path = os.path.join(out_dir_path, os.path.split(input_url)[1])
         logging.info('Copying file from "{}" to "{}"...'.format(input_url, out_path))
-        if not self._simulate:
+        if not get_args().simulate:
             shutil.copy(input_url, out_path)
         logging.info('Done')

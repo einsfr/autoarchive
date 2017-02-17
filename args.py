@@ -1,7 +1,5 @@
 import argparse
 
-import commands
-
 
 def _get_arguments_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
@@ -43,7 +41,6 @@ def _get_arguments_parser() -> argparse.ArgumentParser:
     subparsers.required = True
 
     parser_run = subparsers.add_parser('run')
-    parser_run.set_defaults(exec_func=commands.command_run)
     parser_run.add_argument(
         'input_url',
         help='input URL',

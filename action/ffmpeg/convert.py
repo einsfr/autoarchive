@@ -66,8 +66,8 @@ class FfmpegConvertAction(OutDirCreatingAction):
         'required': ['inputs', 'outputs']
     }
 
-    def __init__(self, conf: dict, simulate: bool):
-        super().__init__(conf, simulate)
+    def __init__(self):
+        super().__init__()
         _factory = get_ffmpeg_factory()
         logging.debug('Fetching FFmpegConvertCommand object...')
         self._ffmpeg_convert = _factory.get_ffmpeg_command(FFmpegConvertCommand)

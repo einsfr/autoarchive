@@ -7,6 +7,7 @@ from traceback import TracebackException
 
 from args import get_args
 from configuration import get_configuration, ConfigurationException
+import commands
 
 
 BASE_DIR = os.path.dirname(__file__)
@@ -52,8 +53,9 @@ if __name__ == '__main__':
         sys.stderr.write(str(e))
         sys.exit(1)
     configure_logger(conf['log_dir'], args.log_split, args.log_level, args.verbosity)
+    command = getattr(commands, 'command_{}'.format(args.command))
     try:
-        args.exec_func(args, conf)
+        command()
     except Exception as e:
         tbe = TracebackException.from_exception(e)
         logging.critical(' '.join(list(tbe.format())))
