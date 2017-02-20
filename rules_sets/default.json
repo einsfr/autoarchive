@@ -3,9 +3,14 @@
   "patterns": [
     [".*\\d{3}_\\d{4}_\\d{2}\\.mp4$", {
       "filters": {
-        "metadata": {
+        "ffprobe.meta": {
           "stream:v:0": {
             "field_mode": 0
+          },
+          "count:v": 1,
+          "count:a": [["gte", 2], ["lte", 4]],
+          "format": {
+            "bit_rate": ["gte", 20000000]
           }
         }
       }

@@ -71,8 +71,8 @@ class FfmpegConvertAction(OutDirCreatingAction):
         _factory = get_ffmpeg_factory()
         logging.debug('Fetching FFmpegConvertCommand object...')
         self._ffmpeg_convert = _factory.get_ffmpeg_command(FFmpegConvertCommand)
-        logging.debug('Fetching FFmpegMetadataCollector object...')
-        self._ffmpeg_meta_collector = _factory.get_ffprobe_metadata_collector(FFprobeMetadataCollector)
+        logging.debug('Fetching FFprobeMetadataCollector object...')
+        self._ffprobe_meta_collector = _factory.get_ffprobe_metadata_collector(FFprobeMetadataCollector)
 
     @classmethod
     def _validate_profile(cls, profile_dict: dict) -> None:
@@ -86,7 +86,7 @@ class FfmpegConvertAction(OutDirCreatingAction):
         template = jinja_env.get_template(profile_template_name)
         logging.debug('Building profile template rendering context...')
         context = {
-            'input': self._ffmpeg_meta_collector.get_metadata(input_url)
+            'input': self._ffprobe_meta_collector.get_metadata(input_url)
         }
         profile_data = template.render(context)
         logging.debug('Rendered profile:\r\n{}'.format(profile_data))

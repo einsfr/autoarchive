@@ -46,6 +46,9 @@ class FFmpegFactory:
     def get_ffprobe_metadata_collector(self, cmd_class):
         return self._get_object(cmd_class)
 
+    def get_ffprobe_metadata_filter(self, cmd_class):
+        return self._get_object(cmd_class)
+
 
 _factory = None
 

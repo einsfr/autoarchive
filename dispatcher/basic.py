@@ -4,6 +4,7 @@ import re
 import pprint
 
 from action import get_action_class
+from pattern_filter import get_pattern_filter_class
 from dispatcher import PolicyViolationException, ActionRunException
 from args import get_args
 from configuration import get_configuration
@@ -26,6 +27,7 @@ class BasicDispatcher:
 
         self._patterns_cache = []
         self._action_cache = {}  # ACTIONS ARE CACHEABLE - DO NOT FORGET IT - THEY'RE USED MORE THAN ONCE
+        self._filter_cache = {}  # FILTERS ARE CACHEABLE - DO NOT FORGET IT - THEY'RE USED MORE THAN ONCE
 
     def dispatch(self):
         if self._simulate:
@@ -60,6 +62,15 @@ class BasicDispatcher:
             self._action_cache[action_id] = action
             return action
 
+    def _get_filter(self, filter_id: str):
+        try:
+            return self._filter_cache[filter_id]
+        except KeyError:
+            logging.debug('Filter cache miss - importing {}...'.format(filter_id))
+            filter_obj = get_pattern_filter_class(filter_id)()
+            self._filter_cache[filter_id] = filter_obj
+            return filter_obj
+
     def _dispatch_file(self):
         self._input_url = os.path.abspath(self._input_url)
         self._dispatch_file_dir_common(self._input_url, self._conf_out_dir)
@@ -79,7 +90,7 @@ class BasicDispatcher:
             else:
                 raise ValueError('Unknown policy: {}'.format(self._policy))
         logging.debug('Matches: {}'.format(patterns))
-        filtered_patterns = self._filter_patterns(patterns)
+        filtered_patterns = self._filter_patterns(in_path, patterns)
         for n, p in enumerate(filtered_patterns):
             action_id = p[2]
             action_params = p[3]
@@ -92,19 +103,25 @@ class BasicDispatcher:
             logging.debug('Using action object {}'.format(action))
             action.run(in_path, action_params, out_dir)
 
-    def _filter_patterns(self, patterns: list) -> list:
-        result = None
+    def _filter_patterns(self, input_url: str, patterns: list) -> list:
+        result = []
         for n, p in enumerate(patterns):
             pattern_opts = p[1]
-            try:
+
+            if 'passthrough' in pattern_opts:
                 if not pattern_opts['passthrough']:
-                    result = patterns[:n + 1]
+                    result.append(p)
                     break
-            except KeyError:
-                pass
-        if result is None:
-            result = patterns
-        else:
+
+            if 'filters' in pattern_opts:
+                if not all(
+                        [self._get_filter(filter_id).filter(input_url, filter_params)
+                         for filter_id, filter_params in pattern_opts['filters'].items()]
+                ):
+                    continue
+
+            result.append(p)
+        if len(result) != len(patterns):
             logging.debug('Matches after filtering: {}'.format(result))
         return result
 
