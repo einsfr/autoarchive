@@ -34,6 +34,10 @@ class FFmpegFactory:
             self._objects[cmd_class_str] = cmd_class(*args, **kwargs)
         return self._objects[cmd_class_str]
 
+    @property
+    def objects(self):
+        return self._objects
+
     def get_ffmpeg_command(self, cmd_class):
         return self._get_object(cmd_class, self._ffmpeg_path, self._temp_dir, self._simulate)
 

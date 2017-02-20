@@ -19,10 +19,11 @@ class FFprobeBaseCommand:
             raise FFprobeBinaryNotFound(msg)
         self._bin_path = bin_path
         self._timeout = timeout
-        self._cache = HashCache(cache_size=10)
+        self._cache = HashCache(10, logging.debug)
 
     def _exec(self, args: list) -> dict:
         cache_id = ''.join(args)
+        logging.debug('Trying to get ffprobe result from cache...')
         try:
             cached_value = self._cache.from_cache(cache_id)
         except CacheMissException:

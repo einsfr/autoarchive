@@ -29,7 +29,7 @@ class FFprobeFieldModeSolver(AbstractFieldModeSolver):
 
     def __init__(self):
         self._ffprobe_frame_cmd = get_ffmpeg_factory().get_ffprobe_command(FFprobeFrameCommand)
-        self._cache = HashCache(cache_size=10)
+        self._cache = HashCache(10, logging.debug)
 
     def _solve(self, total_count: int, tff_counf: int, bff_count: int, progressive_count: int) -> int:
         if tff_counf == total_count:
@@ -61,6 +61,7 @@ class FFprobeFieldModeSolver(AbstractFieldModeSolver):
 
     def solve(self, input_url: str, video_stream_number: int) -> int:
         cache_id = '{}{}'.format(input_url, video_stream_number)
+        logging.debug('Trying to get field mode from cache...')
         try:
             result = self._cache.from_cache(cache_id)
         except CacheMissException:

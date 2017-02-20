@@ -83,15 +83,14 @@ class FFprobeMetadataCollector:
         self._ffprobe_info = factory.get_ffprobe_command(FFprobeInfoCommand)
         logging.debug('Fetching FFprobeFieldModeSolver object...')
         self._int_prog_solver = factory.get_ffprobe_field_mode_solver(FFprobeFieldModeSolver)
-        self._cache = HashCache(cache_size=10)
+        self._cache = HashCache(10, logging.debug)
 
     def get_metadata(self, input_url: str) -> FFprobeMetadataResult:
-        logging.debug('Trying to get file metadata from ffprobe cache...')
+        logging.debug('Trying to get file metadata from cache...')
         try:
             cached_value = self._cache.from_cache(input_url)
-            logging.debug('Cache hit')
         except CacheMissException:
-            logging.debug('Cache miss')
+            pass
         else:
             return cached_value
         result = FFprobeMetadataResult(

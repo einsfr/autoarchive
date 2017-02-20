@@ -56,3 +56,11 @@ class ConditionPairProcessingException(Exception):
             value_left, type(value_left), operator, value_right, type(value_right)
         )
         super().__init__(msg, *args, **kwargs)
+
+
+class UnknownStreamType(ValueError):
+    pass
+
+
+class StreamIndexOutOfRange(ValueError):
+    pass
