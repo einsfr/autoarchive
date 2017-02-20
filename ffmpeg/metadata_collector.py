@@ -39,22 +39,10 @@ class FFprobeMetadataResult:
         return {self._info['streams'][n]['index']: self._info['streams'][n] for n in self._v_streams_numbers}
 
     @property
-    def vs_count(self) -> int:
-        if not self._av_streams_found:
-            self._find_av_streams()
-        return len(self._v_streams_numbers)
-
-    @property
     def a_streams(self) -> dict:
         if not self._av_streams_found:
             self._find_av_streams()
         return {self._info['streams'][n]['index']: self._info['streams'][n] for n in self._a_streams_numbers}
-
-    @property
-    def as_count(self) -> int:
-        if not self._av_streams_found:
-            self._find_av_streams()
-        return len(self._a_streams_numbers)
 
     @property
     def format(self) -> dict:
@@ -80,12 +68,10 @@ class FFprobeMetadataResult:
     def __str__(self):
         return {
             'a_streams': self.a_streams,
-            'as_count': self.as_count,
             'filename': self.filename,
             'filename_ext': self.filename_ext,
             'format': self.format,
             'v_streams': self.v_streams,
-            'vs_count': self.vs_count,
         }
 
 
