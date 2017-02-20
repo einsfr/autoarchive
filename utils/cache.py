@@ -27,8 +27,10 @@ class HashCache:
         try:
             value = self._cache[self._get_hashed_id(item_id)]
         except KeyError:
+            self._cache_misses += 1
             raise CacheMissException
         else:
+            self._cache_hits += 1
             return value
 
     def cache_stats(self):
