@@ -31,28 +31,27 @@ class FFprobeBaseCommand:
             return cached_value
         logging.debug('Starting {}'.format(' '.join(args)))
         try:
-            proc = subprocess.run(
-                args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=self._timeout, universal_newlines=True
-            )
+            proc = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=self._timeout)
         except subprocess.TimeoutExpired as e:
             logging.error('FFprobe timeout - terminating')
             raise FFprobeProcessException from e
         if proc.returncode == 0:
             logging.debug('FFprobe done')
+            stdout = proc.stdout.decode('utf-8')
             try:
-                result = json.loads(proc.stdout)
+                result = json.loads(stdout)
                 self._cache.to_cache(cache_id, result)
                 return result
             except ValueError as e:
                 logging.error('FFprobe\'s stdout decoding error: {}'.format(str(e)))
-                logging.debug('Dumping stdout: {}'.format(proc.stdout))
+                logging.debug('Dumping stdout: {}'.format(stdout))
                 raise FFprobeProcessException from e
         elif proc.returncode < 0:
             msg = 'FFprobe terminated with signal {}'.format(abs(proc.returncode))
             raise FFprobeTerminatedException(msg)
         else:
             logging.error('Ffprobe exited with code {}'.format(proc.returncode))
-            logging.debug('Dumping stderr: {}'.format(proc.stderr))
+            logging.debug('Dumping stderr: {}'.format(proc.stderr.decode('utf-8')))
             raise FFprobeProcessException()
 
 
