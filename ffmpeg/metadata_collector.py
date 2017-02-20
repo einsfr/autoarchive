@@ -30,6 +30,7 @@ class FFprobeMetadataResult:
         logging.debug('Found {} video stream(s) and {} audio stream(s)'.format(
             len(self._v_streams_numbers), len(self._a_streams_numbers)
         ))
+        self._av_streams_found = True
 
     @property
     def v_streams(self) -> dict:
