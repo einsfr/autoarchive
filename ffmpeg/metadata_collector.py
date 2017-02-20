@@ -99,13 +99,14 @@ class FFprobeMetadataCollector:
         self._cache = HashCache(cache_size=10)
 
     def get_metadata(self, input_url: str) -> FFprobeMetadataResult:
+        logging.debug('Trying to get file metadata from ffprobe cache...')
         try:
             cached_value = self._cache.from_cache(input_url)
+            logging.debug('Cache hit')
         except CacheMissException:
-            pass
+            logging.debug('Cache miss')
         else:
             return cached_value
-        logging.debug('Trying to get file metadata from ffprobe...')
         result = FFprobeMetadataResult(
             input_url,
             self._ffprobe_info.exec(input_url, show_programs=False),
