@@ -33,4 +33,8 @@ class HashCache:
 
     def cache_stats(self):
         total_requests = self._cache_hits + self._cache_misses
-        return self._cache_hits, self._cache_misses, total_requests, self._cache_hits / total_requests
+        try:
+            ratio = self._cache_hits / total_requests
+        except ZeroDivisionError:
+            ratio = 0.0
+        return self._cache_hits, self._cache_misses, total_requests, ratio
