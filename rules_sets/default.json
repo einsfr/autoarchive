@@ -1,7 +1,7 @@
 {
   "policy": "warning",
   "patterns": [
-    [".*\\d{3}_\\d{4}_\\d{2}\\.mp4$", {
+    ["^__HQ__.*\\d{3}_\\d{4}_\\d{2}\\.mp4$", {
       "filters": {
         "ffprobe.meta": {
           "stream:v:0": {
@@ -16,12 +16,39 @@
       }
     }, "ffmpeg.convert", {
       "profile": "x264_itff_422_amix+aac_audio.json",
-      "out_dir": "xdcam"
+      "dir_depth": 2
     }],
+
+    ["^__HQ__.*\\.(?:docx|doc)$", {}, "copy", {
+      "dir_depth": 2
+    }],
+
+    ["^__LQ__.*\\d{3}_\\d{4}_\\d{2}\\.mp4$", {
+      "filters": {
+        "ffprobe.meta": {
+          "stream:v:0": {
+            "field_mode": 1
+          },
+          "count:v": 1,
+          "count:a": [["gte", 2], ["lte", 4]],
+          "format": {
+            "bit_rate": ["gte", 20000000]
+          }
+        }
+      }
+    }, "ffmpeg.convert", {
+      "profile": "x264_540itff_420_amix.json",
+      "dir_depth": 2
+    }],
+
+    ["^__LQ__.*\\.(?:docx|doc)$", {}, "copy", {
+      "dir_depth": 2
+    }],
+
     [".*\\.mxf$", {}, "ffmpeg.convert", {
       "profile": "x264_itff_422.json"
     }],
-    [".*\\.(?:docx|doc)$", {}, "copy", {}],
-    [".*\\.(?:xml|smi|ppn|bim|db)", {}, "skip", {}]
+
+    [".*\\.(?:xml|smi|ppn|bim|db|xmp)$", {}, "skip", {}]
   ]
 }
