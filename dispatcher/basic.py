@@ -108,17 +108,17 @@ class BasicDispatcher:
         for n, p in enumerate(patterns):
             pattern_opts = p[1]
 
-            if 'passthrough' in pattern_opts:
-                if not pattern_opts['passthrough']:
-                    result.append(p)
-                    break
-
             if 'filters' in pattern_opts:
                 if not all(
                         [self._get_filter(filter_id).filter(input_url, filter_params)
                          for filter_id, filter_params in pattern_opts['filters'].items()]
                 ):
                     continue
+
+            if 'passthrough' in pattern_opts:
+                if not pattern_opts['passthrough']:
+                    result.append(p)
+                    break
 
             result.append(p)
         if len(result) != len(patterns):
