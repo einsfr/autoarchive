@@ -15,12 +15,13 @@
         }
       }
     }, "ffmpeg.convert", {
-      "profile": "x264_itff_422_amix+aac_audio.json"
+      "profile": "x264_itff_422_amix+aac_audio.json",
+      "out_dir": "xdcam"
     }],
     [".*\\.mxf$", {}, "ffmpeg.convert", {
       "profile": "x264_itff_422.json"
     }],
-    [".*\\.docx$", {}, "copy", {}],
+    [".*\\.(?:docx|doc)$", {}, "copy", {}],
     [".*\\.(?:xml|smi|ppn|bim|db)", {}, "skip", {}]
   ]
 }

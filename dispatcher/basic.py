@@ -73,10 +73,10 @@ class BasicDispatcher:
 
     def _dispatch_file(self):
         self._input_url = os.path.abspath(self._input_url)
-        self._dispatch_file_dir_common(self._input_url, self._conf_out_dir)
+        self._dispatch_file_dir_common(self._input_url, '')
         self._no_matches_warning()
 
-    def _dispatch_file_dir_common(self, in_path: str, out_dir: str):
+    def _dispatch_file_dir_common(self, in_path: str, out_dir_relative: str):
         logging.info('Searching for matching patterns in rules set for "{}"...'.format(in_path))
         patterns = self._get_matching_patterns(in_path)
         if not patterns:
@@ -101,6 +101,10 @@ class BasicDispatcher:
             )
             action = self._get_action(action_id)
             logging.debug('Using action object {}'.format(action))
+            if 'out_dir' in action_params and action_params['out_dir']:
+                out_dir = os.path.abspath(os.path.join(self._conf_out_dir, action_params['out_dir'], out_dir_relative))
+            else:
+                out_dir = os.path.join(self._conf_out_dir, out_dir_relative)
             action.run(in_path, action_params, out_dir)
 
     def _filter_patterns(self, input_url: str, patterns: list) -> list:
@@ -138,9 +142,9 @@ class BasicDispatcher:
         self._input_url = os.path.abspath(self._input_url)
         if self._use_in_dir_as_root:
             logging.debug('Including input directory to output path...')
-            out_base_dir = os.path.join(self._conf_out_dir, os.path.split(self._input_url)[1])
+            out_base_dir = os.path.split(self._input_url)[1]
         else:
-            out_base_dir = self._conf_out_dir
+            out_base_dir = ''
 
         logging.debug('Building file list...')
         dir_list = []
