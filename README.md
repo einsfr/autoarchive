@@ -1,25 +1,37 @@
 # autoarchive
-Automatic batch processor for media archiving purposes written entirely in Python (>=3.5). Parses input file
-or directory and performs some action (one or many) with every file found according to rules set. Each rule in rules set
-contains a regular expression (for input filename match checking), an action name and some action and pattern parameters - some additional metadata filtering rules, for example.
+Автоматический пакетный обработчик для работы с медиафайлами. Изначально разрабаталывался для нужд архивирования (отсюда
+и название), но может быть использован и во многих других случаях. Использует Python версии не менее 3.5. Принимает
+на входе каталог (для которого составляется карта всех файлов) и выполняет некоторые действия, описанные в наборах
+правил. Выбор правил происходит в первую очередь по соответствию имени и пути к файлу регулярному выражению. Но
+в дальнейшем возможна фильтрация результата по свойствам самого файла - количеству потоков, разрешению, режиму полей
+кадра и т.д.
 
-## Supported rules set formats
-* JSON
+## Пример использования
+Допустим имеется папка с многочисленными материалами в формате XDCAM. Часть этих материалов нужно сохранить в высоком
+качестве для долгосрочного хранения. Часть - в низком - на всякий случай. XDCAM не слишком удобен для обработки
+вручную - множество вложенных папок со множеством отдельных файлов. А если в каждом материале присутствует текстовый
+файл с его описанием, который тоже нужно сохранить? Получается нудная и однообразная работа. Собственно из неё и родился
+этот проект.
 
-## Supported actions
+Допишу позже...
+
+## Поддерживаемые источники наборов правил
+* JSON-файлы
+
+## Поддерживаемые действия
 
 ### copy
-Copies a file to the output folder.
+Копирует файл.
 
 ### skip
-Simply skips a file (for using with 'warning' or 'error' policies)
+Пропускает файл, ничего не делая - полезно при использовании политик 'warning' и 'error'.
 
 
 ### ffmpeg
-Processes a file with ffmpeg. Ffmpeg and ffprobe binaries are required and must be installed separately. See FFmpeg
-project's official site: [ffmpeg.org](https://ffmpeg.org)).
+Использует ffmpeg для выполнения различных обработок. Для работы необходимы исполняемые файлы, которые можно скачать
+с официального сайта проекта [ffmpeg.org](https://ffmpeg.org)). Если бы не он, ничего этого вообще бы не было.
 
 #### ffmpeg.convert
-A format conversion action. Calls ffprobe to gather input file metadata (width, height, codec, etc...)
-and [Jinja2](http://jinja.pocoo.org/) template engine to use it in conversion profiles.
-
+Конвертирование файла. Обращается к ffprobe для сбора информации о файле (свойства контейнера, потоков, их количество и
+т.п.) и передаёт её шаблонному движку [Jinja2](http://jinja.pocoo.org/) для использования в профилях конвертирования
+(шаблонах настроек ffmpeg)
