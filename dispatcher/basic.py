@@ -13,44 +13,58 @@ from configuration import get_configuration
 class BasicDispatcher:
 
     def __init__(self, rules_set: dict):
-        self._patterns = rules_set['patterns']
+        args = get_args()
+
         self._policy = rules_set['policy']
         self._no_match_files = []
-
         self._conf_out_dir = get_configuration()['out_dir']
-
-        args = get_args()
         self._dir_depth = args.dir_depth
         self._use_in_dir_as_root = args.use_in_dir_as_root
         self._simulate = args.simulate
-        self._input_url = args.input_url
 
+        self._input_url = os.path.abspath(args.input_url)
+        self._input_is_a_file = os.path.isfile(self._input_url)
+        self._input_is_a_dir = os.path.isdir(self._input_url)
+
+        self._patterns = rules_set['patterns']
         self._patterns_cache = []
+        self._fill_patterns_cache()
+
         self._action_cache = {}  # ACTIONS ARE CACHEABLE - DO NOT FORGET IT - THEY'RE USED MORE THAN ONCE
         self._filter_cache = {}  # FILTERS ARE CACHEABLE - DO NOT FORGET IT - THEY'RE USED MORE THAN ONCE
+
+    def _fill_patterns_cache(self):
+        logging.debug('Filling rules set patterns cache...')
+        for reg_exp, *p in self._patterns:
+            self._patterns_cache.append((re.compile(reg_exp, re.IGNORECASE), reg_exp, *p))
+        logging.debug('Rules set patterns cache:\r\n{}'.format(pprint.pformat(self._patterns_cache)))
 
     def dispatch(self):
         if self._simulate:
             logging.warning('--- THIS IS A SIMULATION - NO CHANGES WILL BE MADE ---')
-        if os.path.isfile(self._input_url):
-            logging.info('Dispatching input URL as a file...')
-            self._dispatch_file()
-        elif os.path.isdir(self._input_url):
-            logging.info('Dispatching input URL as a directory...')
-            self._dispatch_directory()
+        if self._input_is_a_file:
+            raise NotImplementedError  # TODO: FIX
+        elif self._input_is_a_dir:
+            if self._use_in_dir_as_root:
+                logging.debug('Including input directory to output path...')
+                rel_out_dir = (os.path.split(self._input_url)[1])
+            else:
+                rel_out_dir = ''
+
+            logging.debug('Building file list...')
+            input_root_len = len(self._input_url)
+            dir_list = []
+            file_count = 0
+            for path, dirs, files in os.walk(self._input_url):
+                if len(files):
+                    dir_list.append({'rel_dir': path[input_root_len + 1:], 'files': files})
+                    file_count += len(files)
+            logging.debug('Found {} files(s) in {} directory(ies)'.format(file_count, len(dir_list)))
+
         else:
             raise ValueError('Basic dispatcher supports only files and directories as input')
 
-    def _fill_patterns_cache(self):
-        self._patterns_cache = []
-        for reg_exp, *p in self._patterns:
-            self._patterns_cache.append((re.compile(reg_exp, re.IGNORECASE), reg_exp, *p))
-
     def _get_matching_patterns(self, in_path: str) -> list:
-        if not self._patterns_cache:
-            logging.debug('Filling rules set patterns cache...')
-            self._fill_patterns_cache()
-            logging.debug('Rules set patterns cache:\r\n{}'.format(pprint.pformat(self._patterns_cache)))
         return [p for r, *p in self._patterns_cache if r.match(in_path) is not None]
 
     def _get_action(self, action_id: str):
@@ -70,11 +84,6 @@ class BasicDispatcher:
             filter_obj = get_pattern_filter_class(filter_id)()
             self._filter_cache[filter_id] = filter_obj
             return filter_obj
-
-    def _dispatch_file(self):
-        self._input_url = os.path.abspath(self._input_url)
-        self._dispatch_file_dir_common(self._input_url, '')
-        self._no_matches_warning()
 
     def _dispatch_file_dir_common(self, in_path: str, out_dir_relative: str):
         logging.info('Searching for matching patterns in rules set for "{}"...'.format(in_path))
@@ -139,25 +148,6 @@ class BasicDispatcher:
             )
 
     def _dispatch_directory(self):
-        self._input_url = os.path.abspath(self._input_url)
-        if self._use_in_dir_as_root:
-            logging.debug('Including input directory to output path...')
-            out_base_dir = os.path.split(self._input_url)[1]
-        else:
-            out_base_dir = ''
-
-        logging.debug('Building file list...')
-        dir_list = []
-        input_root_len = len(self._input_url)
-        for path, dirs, files in os.walk(self._input_url):
-            if len(files):
-                dir_list.append({'dir': path[input_root_len + 1:], 'files': files})
-
-        dir_count = len(dir_list)
-        file_count = 0
-        for d in dir_list:
-            file_count += len(d['files'])
-        logging.debug('Found {} files(s) in {} directory(ies)'.format(file_count, dir_count))
 
         processed_files_count = 0
         processed_errors = []
