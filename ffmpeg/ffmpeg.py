@@ -46,7 +46,7 @@ class FFmpegBaseCommand:
                 shutil.move(tmp_path, out_path)
         logging.info('Done')
 
-    def _progress_callback(self,frame: int) -> None:
+    def _progress_callback(self, frame: int) -> None:
         logging.debug('Processed {} frames'.format(frame))
 
     def _error_callback(self, return_code: int, proc_log: deque, proc_exception: Exception, tmp_paths: list) -> None:
