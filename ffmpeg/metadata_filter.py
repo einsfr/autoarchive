@@ -1,10 +1,10 @@
 import logging
 import re
 
-from ffmpeg.metadata_collector import FFprobeMetadataCollector, FFprobeMetadataResult
-from ffmpeg import get_ffmpeg_factory
-from ffmpeg.exceptions import UnknownFilterSelector, UnknownMetadataParameter, WrongConditionType, UnknownOperator,\
+from .metadata_collector import FFprobeMetadataCollector, FFprobeMetadataResult
+from .exceptions import UnknownFilterSelector, UnknownMetadataParameter, WrongConditionType, UnknownOperator,\
     ConditionPairProcessingException, UnknownStreamType, StreamIndexOutOfRange
+from . import get_ffmpeg_factory
 
 
 class FFprobeMetadataFilter:

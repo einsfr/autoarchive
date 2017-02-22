@@ -2,12 +2,13 @@ import logging
 
 from dispatcher import get_dispatcher_class
 from rules_provider import get_rules_provider_class
-from args import get_args
+
+from autoarchive import app
 
 
 def command_run() -> None:
     logging.info('Starting "run" command...')
-    args = get_args()
+    args = app.args
     rules_provider = get_rules_provider_class(args.rules_provider)()
     rules_set = rules_provider.get_rules(args.rules_set)
     if not rules_set:

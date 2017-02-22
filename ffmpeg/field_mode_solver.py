@@ -1,8 +1,8 @@
 import logging
 
-from ffmpeg.ffprobe import FFprobeFrameCommand
-from utils.cache import HashCache, CacheMissException
-from ffmpeg import get_ffmpeg_factory
+from .ffprobe import FFprobeFrameCommand
+from .cache import HashCache, CacheMissException
+from . import get_ffmpeg_factory
 
 
 class AbstractFieldModeSolver:

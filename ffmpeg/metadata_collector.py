@@ -1,10 +1,10 @@
 import logging
 import os
 
-from utils.cache import HashCache, CacheMissException
-from ffmpeg.ffprobe import FFprobeInfoCommand
-from ffmpeg.field_mode_solver import FFprobeFieldModeSolver
-from ffmpeg import get_ffmpeg_factory
+from .cache import HashCache, CacheMissException
+from .ffprobe import FFprobeInfoCommand
+from .field_mode_solver import FFprobeFieldModeSolver
+from . import get_ffmpeg_factory
 
 
 class FFprobeMetadataResult:

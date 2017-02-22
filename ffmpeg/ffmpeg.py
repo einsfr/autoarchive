@@ -7,7 +7,7 @@ import subprocess
 from collections import deque
 from datetime import datetime
 
-from ffmpeg.exceptions import FFmpegProcessException, FFmpegBinaryNotFound, FFmpegInputNotFoundException, \
+from .exceptions import FFmpegProcessException, FFmpegBinaryNotFound, FFmpegInputNotFoundException, \
     FFmpegOutputAlreadyExistsException
 
 
@@ -24,9 +24,6 @@ class FFmpegBaseCommand:
         self._bin_path = bin_path
         self._tmp_dir = os.path.abspath(tmp_dir)
         self._simulate = simulate
-
-
-class FFmpegConvertCommand(FFmpegBaseCommand):
 
     def _success_callback(self, output_mapping: list) -> None:
         logging.info('Moving files from temporary directory...')

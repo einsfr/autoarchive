@@ -3,8 +3,8 @@ import logging
 import subprocess
 import json
 
-from ffmpeg.exceptions import FFprobeTerminatedException, FFprobeProcessException, FFprobeBinaryNotFound
-from utils.cache import HashCache, CacheMissException
+from .exceptions import FFprobeTerminatedException, FFprobeProcessException, FFprobeBinaryNotFound
+from .cache import HashCache, CacheMissException
 
 
 class FFprobeBaseCommand:
