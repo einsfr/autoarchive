@@ -4,8 +4,7 @@ import json
 
 from dispatcher import ActionRunException
 from action import OutDirCreatingAction
-from ffmpeg.ffmpeg import FFmpegConvertCommand
-from ffmpeg import jinja_env
+from ffmpeg.ffmpeg import FFmpegBaseCommand
 from ffmpeg import exceptions as ffmpeg_exceptions
 from ffmpeg.metadata_collector import FFprobeMetadataCollector
 from ffmpeg import get_ffmpeg_factory
@@ -17,14 +16,9 @@ class FfmpegConvertAction(OutDirCreatingAction):
         super().__init__()
         _factory = get_ffmpeg_factory()
         logging.debug('Fetching FFmpegConvertCommand object...')
-        self._ffmpeg_convert = _factory.get_ffmpeg_command(FFmpegConvertCommand)
+        self._ffmpeg_convert = _factory.get_ffmpeg_command(FFmpegBaseCommand)
         logging.debug('Fetching FFprobeMetadataCollector object...')
         self._ffprobe_meta_collector = _factory.get_ffprobe_metadata_collector(FFprobeMetadataCollector)
-
-    @classmethod
-    def _validate_profile(cls, profile_dict: dict) -> None:
-
-
 
     def run(self, input_url: str, action_params: dict, out_dir_path: str) -> None:
         super().run(input_url, action_params, out_dir_path)
