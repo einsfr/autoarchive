@@ -6,23 +6,21 @@ import pprint
 from action import get_action_class
 from pattern_filter import get_pattern_filter_class
 from dispatcher import PolicyViolationException, ActionRunException
-from args import get_args
-from configuration import get_configuration
+from application import app
 
 
 class BasicDispatcher:
 
     def __init__(self, rules_set: dict):
-        args = get_args()
 
         self._policy = rules_set['policy']
         self._no_match_files = []
-        self._conf_out_dir = get_configuration()['out_dir']
-        self._dir_depth = args.dir_depth
-        self._use_in_dir_as_root = args.use_in_dir_as_root
-        self._simulate = args.simulate
+        self._conf_out_dir = app.conf['out_dir']
+        self._dir_depth = app.args.dir_depth
+        self._use_in_dir_as_root = app.args.use_in_dir_as_root
+        self._simulate = app.args.simulate
 
-        self._input_url = os.path.abspath(args.input_url)
+        self._input_url = os.path.abspath(app.args.input_url)
         self._input_is_a_file = os.path.isfile(self._input_url)
         self._input_is_a_dir = os.path.isdir(self._input_url)
 
@@ -102,6 +100,7 @@ class BasicDispatcher:
                 return
             elif self._policy == 'warning':
                 self._no_match_files.append(rel_in_path)
+                return
             elif self._policy == 'error':
                 raise PolicyViolationException('No matches were found for "{}"'.format(rel_in_path))
             else:
@@ -158,7 +157,8 @@ class BasicDispatcher:
             action.run(
                 abs_in_path,
                 action_params,
-                out_dir
+                out_dir,
+                self._simulate
             )
 
     def _get_matching_patterns(self, in_path: str) -> list:

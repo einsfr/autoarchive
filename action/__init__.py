@@ -2,7 +2,6 @@ import os
 import logging
 
 from utils.module_import import get_class
-from args import get_args
 
 
 def get_action_class(action_id: str):
@@ -11,14 +10,13 @@ def get_action_class(action_id: str):
 
 class AbstractAction:
 
-    def run(self, input_url: str, action_params: dict, out_dir_path: str) -> None:
+    def run(self, input_url: str, action_params: dict, out_dir_path: str, simulate: bool) -> None:
         raise NotImplementedError
 
 
 class OutDirCreatingAction(AbstractAction):
 
-    def run(self, input_url: str, action_params: dict, out_dir_path: str) -> None:
-        simulate = get_args().simulate
+    def run(self, input_url: str, action_params: dict, out_dir_path: str, simulate: bool) -> None:
         if not simulate:
             logging.debug('Creating output directory "{}"...'.format(out_dir_path))
             if not simulate:

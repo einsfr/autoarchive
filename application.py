@@ -6,7 +6,8 @@ import os
 from datetime import datetime
 from traceback import TracebackException
 
-import commands
+from rules_provider import get_rules_provider_class
+from dispatcher import get_dispatcher_class
 
 
 class ConfigurationException(Exception):
@@ -42,7 +43,7 @@ class Application:
         return self._base_dir
 
     def exec(self):
-        command = getattr(commands, 'command_{}'.format(self.args.command))
+        command = getattr(self, '_command_{}'.format(self.args.command))
         try:
             command()
         except Exception as e:
@@ -123,3 +124,21 @@ class Application:
             logger.addHandler(console)
 
         logging.debug('Logger initiated')
+
+    def _command_run(self):
+        logging.info('Starting "run" command...')
+        rules_provider = get_rules_provider_class(self.args.rules_provider)()
+        rules_set = rules_provider.get_rules(self.args.rules_set)
+        if not rules_set:
+            raise ValueError('Rules set can\'t be empty')
+        if type(rules_set) != dict:
+            raise TypeError('Rules set must be a dictionary')
+        logging.debug('Rules set ready')
+        logging.debug('Starting dispatcher...')
+        get_dispatcher_class(self.args.dispatcher)(rules_set).dispatch()
+
+
+"""
+:type Application
+"""
+app = None
