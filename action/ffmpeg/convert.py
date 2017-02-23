@@ -3,10 +3,10 @@ import os
 
 from dispatcher import ActionRunException
 from action import OutDirCreatingAction
-from ffmpeg.ffmpeg import FFmpegBaseCommand
-from ffmpeg import exceptions as ffmpeg_exceptions
-from ffmpeg.metadata_collector import FFprobeMetadataCollector
-from ffmpeg import factory, profile_loader
+from pyffwrapper.ffmpeg import FFmpegBaseCommand
+from pyffwrapper import exceptions as ffmpeg_exceptions
+from pyffwrapper.metadata_collector import FFprobeMetadataCollector
+from pyffwrapper import factory, profile_loader
 
 
 class FfmpegConvertAction(OutDirCreatingAction):

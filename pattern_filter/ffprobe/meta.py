@@ -1,5 +1,5 @@
-from ffmpeg.factory import ffprobe_factory
-from ffmpeg.metadata_filter import FFprobeMetadataFilter
+from pyffwrapper.factory import ffprobe_factory
+from pyffwrapper.metadata_filter import FFprobeMetadataFilter
 from pattern_filter import AbstractPatternFilter
 
 

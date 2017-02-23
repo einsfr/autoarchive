@@ -1,0 +1,3 @@
+[submodule "pyffwrapper"]
+	path = pyffwrapper
+	url = https://github.com/einsfr/pyffwrapper.git

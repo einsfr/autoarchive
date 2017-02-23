@@ -2,9 +2,9 @@ import os
 
 from args_parser import args_parser
 import application
-from ffmpeg import factory, profile_loader
-from ffmpeg.profile_data_provider import JinjaProfileDataProvider
-from ffmpeg.profile_data_parser import JsonProfileDataParser
+from pyffwrapper import factory, profile_loader
+from pyffwrapper.profile_data_provider import JinjaProfileDataProvider
+from pyffwrapper.profile_data_parser import JsonProfileDataParser
 
 
 if __name__ == '__main__':
