@@ -13,7 +13,7 @@ class JinjaProfileDataProvider(AbstractProfileDataProvider):
 
     def __init__(self, template_loader: BaseLoader = None):
         if template_loader is None:
-            template_loader = FileSystemLoader(os.path.join(os.path.basename(__file__), 'ff_profiles'))
+            template_loader = FileSystemLoader(os.path.join(os.path.dirname(__file__), 'ff_profiles'))
         self._jinja_env = Environment(loader=template_loader, autoescape=False)
 
     def get_profile_data(self, profile_name: str, **kwargs):

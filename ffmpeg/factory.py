@@ -1,6 +1,11 @@
 import logging
 
 
+ffmpeg_factory = None
+
+ffprobe_factory = None
+
+
 class FFFactory:
 
     def __init__(self):
@@ -31,7 +36,7 @@ class FFmpegFactory(FFFactory):
 
 class FFprobeFactory(FFFactory):
 
-    def __init__(self, ffprobe_path: str, probe_timeout: int):
+    def __init__(self, ffprobe_path: str, probe_timeout: int = 5):
         self._ffprobe_path = ffprobe_path
         self._probe_timeout = probe_timeout
         super().__init__()

@@ -6,6 +6,9 @@ from .profile_data_provider import AbstractProfileDataProvider
 from .profile import FFmpegProfile
 
 
+profile_loader = None
+
+
 class ProfileLoader:
 
     PROFILE_SCHEMA = {

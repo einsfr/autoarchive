@@ -11,11 +11,14 @@ from .exceptions import FFmpegProcessException, FFmpegBinaryNotFound, FFmpegInpu
     FFmpegOutputAlreadyExistsException
 
 
+logging.info('FFmpeg is a trademark of Fabrice Bellard <http://www.bellard.org/>, originator of the FFmpeg project.')
+
+
 class FFmpegBaseCommand:
 
     DEFAULT_GENERAL_ARGS = ['-hide_banner', '-n', '-nostdin', '-loglevel', 'warning', '-stats']
 
-    def __init__(self, bin_path: str, tmp_dir: str, simulate: bool):
+    def __init__(self, bin_path: str, tmp_dir: str):
         bin_path = os.path.abspath(bin_path)
         if not (os.path.isfile(bin_path) and os.access(bin_path, os.X_OK)):
             msg = 'FFmpeg binary not found: "{}"'.format(bin_path)
@@ -23,9 +26,8 @@ class FFmpegBaseCommand:
             raise FFmpegBinaryNotFound(msg)
         self._bin_path = bin_path
         self._tmp_dir = os.path.abspath(tmp_dir)
-        self._simulate = simulate
 
-    def _success_callback(self, output_mapping: list) -> None:
+    def _success_callback(self, output_mapping: list, simulate) -> None:
         logging.info('Moving files from temporary directory...')
         for tmp_path, out_path in output_mapping:
             logging.debug('Temporary file: "{}"; output file: "{}"'.format(tmp_path, out_path))
@@ -42,7 +44,7 @@ class FFmpegBaseCommand:
                     )
                 )
                 logging.warning('New output file name: "{}"'.format(out_path))
-            if not self._simulate:
+            if not simulate:
                 shutil.move(tmp_path, out_path)
         logging.info('Done')
 
@@ -61,7 +63,7 @@ class FFmpegBaseCommand:
             )
         )
 
-    def exec(self, inputs: list, outputs: list, general_args: list=None) -> None:
+    def exec(self, inputs: list, outputs: list, simulate: bool, general_args: list=None):
         if general_args is None:
             general_args = self.__class__.DEFAULT_GENERAL_ARGS
         logging.debug('Building FFmpeg command...')
@@ -99,8 +101,8 @@ class FFmpegBaseCommand:
 
         logging.info('Starting FFmpeg...')
         logging.debug(' '.join(args))
-        if self._simulate:
-            self._success_callback(output_mapping)
+        if simulate:
+            self._success_callback(output_mapping, simulate)
             return
 
         proc_log = deque(maxlen=5)
@@ -142,4 +144,4 @@ class FFmpegBaseCommand:
                     [t for t, o in output_mapping]
                 )
             else:
-                self._success_callback(output_mapping)
+                self._success_callback(output_mapping, simulate)

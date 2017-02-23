@@ -4,7 +4,7 @@ import os
 from .cache import HashCache, CacheMissException
 from .ffprobe import FFprobeInfoCommand
 from .field_mode_solver import FFprobeFieldModeSolver
-from . import get_ffmpeg_factory
+from .factory import ffprobe_factory
 
 
 class FFprobeMetadataResult:
@@ -78,11 +78,10 @@ class FFprobeMetadataResult:
 class FFprobeMetadataCollector:
 
     def __init__(self):
-        factory = get_ffmpeg_factory()
         logging.debug('Fetching FFprobeInfoCommand object...')
-        self._ffprobe_info = factory.get_ffprobe_command(FFprobeInfoCommand)
+        self._ffprobe_info = ffprobe_factory.get_ffprobe_command(FFprobeInfoCommand)
         logging.debug('Fetching FFprobeFieldModeSolver object...')
-        self._int_prog_solver = factory.get_ffprobe_field_mode_solver(FFprobeFieldModeSolver)
+        self._int_prog_solver = ffprobe_factory.get_ffprobe_field_mode_solver(FFprobeFieldModeSolver)
         self._cache = HashCache(10, logging.debug)
 
     def get_metadata(self, input_url: str) -> FFprobeMetadataResult:

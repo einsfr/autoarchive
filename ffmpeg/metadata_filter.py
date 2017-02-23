@@ -4,7 +4,7 @@ import re
 from .metadata_collector import FFprobeMetadataCollector, FFprobeMetadataResult
 from .exceptions import UnknownFilterSelector, UnknownMetadataParameter, WrongConditionType, UnknownOperator,\
     ConditionPairProcessingException, UnknownStreamType, StreamIndexOutOfRange
-from . import get_ffmpeg_factory
+from .factory import ffprobe_factory
 
 
 class FFprobeMetadataFilter:
@@ -14,7 +14,7 @@ class FFprobeMetadataFilter:
 
     def __init__(self):
         logging.debug('Fetching FFprobeMetadataCollector object...')
-        self._ff_metadata_collector = get_ffmpeg_factory().get_ffprobe_metadata_collector(FFprobeMetadataCollector)
+        self._ff_metadata_collector = ffprobe_factory.get_ffprobe_metadata_collector(FFprobeMetadataCollector)
         self._stream_selector_re = re.compile(self.STREAM_SELECTOR_RE, re.IGNORECASE)
         self._count_selector_re = re.compile(self.COUNT_SELECTOR_RE, re.IGNORECASE)
 

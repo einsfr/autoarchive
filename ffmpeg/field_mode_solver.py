@@ -2,7 +2,7 @@ import logging
 
 from .ffprobe import FFprobeFrameCommand
 from .cache import HashCache, CacheMissException
-from . import get_ffmpeg_factory
+from .factory import ffprobe_factory
 
 
 class AbstractFieldModeSolver:
@@ -28,7 +28,7 @@ class FFprobeFieldModeSolver(AbstractFieldModeSolver):
     READ_INTERVALS = '%+#10'
 
     def __init__(self):
-        self._ffprobe_frame_cmd = get_ffmpeg_factory().get_ffprobe_command(FFprobeFrameCommand)
+        self._ffprobe_frame_cmd = ffprobe_factory.get_ffprobe_command(FFprobeFrameCommand)
         self._cache = HashCache(10, logging.debug)
 
     def _solve(self, total_count: int, tff_counf: int, bff_count: int, progressive_count: int) -> int:
