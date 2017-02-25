@@ -1,3 +1,7 @@
+""" Модуль с классом `CopyAction`
+
+"""
+
 import logging
 import os
 import shutil
@@ -6,6 +10,9 @@ from action import OutDirCreatingAction
 
 
 class CopyAction(OutDirCreatingAction):
+    """ Действие, в котором входной файл копируется в выходную папку
+
+    """
 
     def run(self, input_url: str, action_params: dict, out_dir_path: str, simulate: bool) -> None:
         super().run(input_url, action_params, out_dir_path, simulate)

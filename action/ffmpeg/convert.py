@@ -1,3 +1,7 @@
+""" Модуль с классом `FfmpegConvertAction`
+
+"""
+
 import logging
 import os
 
@@ -10,6 +14,9 @@ from pyffwrapper import factory, profile_loader
 
 
 class FfmpegConvertAction(OutDirCreatingAction):
+    """ Действие, в котором используется ffmpeg для выполнения преобразования входного файла
+
+    """
 
     def __init__(self):
         super().__init__()

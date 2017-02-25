@@ -1,3 +1,7 @@
+""" Модуль с классом `BasicDispatcher`
+
+"""
+
 import logging
 import os
 import re
@@ -5,13 +9,24 @@ import pprint
 
 from action import get_action_class
 from pattern_filter import get_pattern_filter_class
-from dispatcher import PolicyViolationException, ActionRunException
+from dispatcher import PolicyViolationException, ActionRunException, UnknownPolicyException
 from application import app
 
 
 class BasicDispatcher:
+    """ Класс, описывающий простой диспетчер
+
+    Получает все необходимые для работы параметры из конфигурации приложения и аргументов командной строки. Для всех
+    действий, с которыми будет работать диспетчер, будут создаваться соответствущие объекты - по одному для каждого
+    типа действия - поэтому используется внутренный кэш для сохранения подобных объектов. Та же ситуация и с фильтрами.
+    """
 
     def __init__(self, rules_set: dict):
+        """
+
+        Args:
+            rules_set: Набор правил для обработки
+        """
 
         self._policy = rules_set['policy']
         self._no_match_files = []
@@ -37,12 +52,19 @@ class BasicDispatcher:
         self._file_count = 0
 
     def _fill_patterns_cache(self):
+        """ Компилирует все регулярные выражения из набора правил
+        """
         logging.debug('Filling rules set patterns cache...')
         for reg_exp, *p in self._patterns:
             self._patterns_cache.append((re.compile(reg_exp, re.IGNORECASE), reg_exp, *p))
         logging.debug('Rules set patterns cache:\r\n{}'.format(pprint.pformat(self._patterns_cache)))
 
     def dispatch(self):
+        """ Запускает обработку
+
+        Raises:
+            ValueError: Если по входному пути находится неподходящий объект
+        """
         if self._simulate:
             logging.warning('--- THIS IS A SIMULATION - NO CHANGES WILL BE MADE ---')
         if self._input_is_a_file:
@@ -91,6 +113,21 @@ class BasicDispatcher:
             logging.info('Finished without errors')
 
     def _dispatch(self, rel_in_dir: str, rel_in_path: str):
+        """ Обрабатывает один файл
+
+        Отвечая на вопрос "Зачем передавать отдельно путь к папке и отдельно - путь к файлу в ней же" скажу - всё равно
+        и то и другое присутствует в точке вызова - зачем тратить время на то, чтобы отделять название файла от пути
+        к папке ещё раз?
+
+        Args:
+            rel_in_dir: относительный путь к папке, содержащей обрабатываемый файл
+            rel_in_path: относительный путь к обрабатываемому файлу
+
+        Raises:
+            PolicyViolationException: при использовании политики `error` и отсутствии для какого-либо файла
+                соответствующего ему действия
+            UnknownPolicyException: при попытке использовани политики, неизвестной диспетчеру
+        """
         logging.debug('Base input directory: "{}"'.format(self._input_base_dir))
         logging.info('Searching for matching patterns in rules set for "{}"...'.format(rel_in_path))
         patterns = self._get_matching_patterns(rel_in_path)
@@ -104,7 +141,7 @@ class BasicDispatcher:
             elif self._policy == 'error':
                 raise PolicyViolationException('No matches were found for "{}"'.format(rel_in_path))
             else:
-                raise ValueError('Unknown policy: {}'.format(self._policy))
+                raise UnknownPolicyException(self._policy)
 
         logging.debug('Matches: {}'.format(patterns))
         abs_in_path = os.path.join(self._input_base_dir, rel_in_path)
@@ -162,9 +199,38 @@ class BasicDispatcher:
             )
 
     def _get_matching_patterns(self, in_path: str) -> list:
+        """ Поиск правил, соответствующих пути в `in_path`
+
+        Args:
+            in_path: **относительный** путь к файлу, для которого ищется соответствие
+
+        Returns:
+            Список вида::
+
+                [
+                    (
+                        регулярное выражение, по которому произошло совпадение,
+                        {
+                            параметр обработки соответствия (фильтры, например)...
+                        },
+                        название действия,
+                        {
+                            параметры действия...
+                        }
+                    )
+                ]
+
+        """
         return [p for r, *p in self._patterns_cache if r.match(in_path) is not None]
 
     def _get_action(self, action_id: str):
+        """ Возвращает объект с действием
+
+        Сначала попытается найти соответствующий объект в кэше экземпляра, если же его там нет - создаст и сохранит.
+
+        Returns:
+            Экземпляр класса, описывающего действие
+        """
         try:
             return self._action_cache[action_id]
         except KeyError:
@@ -174,6 +240,13 @@ class BasicDispatcher:
             return action
 
     def _get_filter(self, filter_id: str):
+        """ Возвращает объект с фильтром
+
+        Сначала попытается найти соответствующий объект в кэше экземпляра, если же его там нет - создаст и сохранит.
+
+        Returns:
+            Экземпляр класса, описывающего фильтр
+        """
         try:
             return self._filter_cache[filter_id]
         except KeyError:
@@ -183,6 +256,19 @@ class BasicDispatcher:
             return filter_obj
 
     def _filter_patterns(self, input_url: str, patterns: list) -> list:
+        """ Производит фильтрацию совпадений имён файлов по регулярному выражению
+
+        Помимо собственном фильтрации обрабатывает параметр совпадения `passthrough` - если он присутствует и его
+        значение False - просто удаляет все дальнейшие совпадения.
+
+        Args:
+            input_url: **абсолютный** путь к файлу, для которого нашлись совпадения
+            patterns: список совпадений
+
+        Returns:
+            Возвращает отфильтрованный список совпадений. Формат соответствует формату возвращаемого значения
+            в `_get_matching_patterns`
+        """
         result = []
         for n, p in enumerate(patterns):
             pattern_opts = p[1]
