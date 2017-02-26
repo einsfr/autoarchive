@@ -75,3 +75,5 @@ parser_run.add_argument(
     type=int,
     default=0
 )
+
+parser_version = subparsers.add_parser('version')

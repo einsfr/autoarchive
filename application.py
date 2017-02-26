@@ -9,6 +9,8 @@ from traceback import TracebackException
 from rules_provider import get_rules_provider_class
 from dispatcher import get_dispatcher_class
 
+VERSION = '0.1'
+
 
 class ConfigurationException(Exception):
     pass
@@ -18,7 +20,8 @@ class Application:
 
     def __init__(self, base_dir, args, conf=None):
         self._args = args
-        self._conf = conf
+        self._conf = None
+        self._conf_override = conf
         self._base_dir = base_dir
 
         os.chdir(base_dir)
@@ -31,11 +34,9 @@ class Application:
     @property
     def conf(self) -> dict:
         if not self._conf:
-            try:
-                self._conf = self._validate_configuration(self._get_configuration())
-            except ConfigurationException as e:
-                sys.stderr.write(str(e))
-                sys.exit(1)
+            self._conf = self._validate_configuration(
+                self._get_configuration() if self._conf_override is None else self._conf_override
+            )
         return self._conf
 
     @property
@@ -44,25 +45,18 @@ class Application:
 
     def exec(self):
         command = getattr(self, '_command_{}'.format(self.args.command))
+        logging.info('Starting "{}" command...'.format(self.args.command))
         try:
             command()
         except Exception as e:
             tbe = TracebackException.from_exception(e)
             logging.critical(' '.join(list(tbe.format())))
-            sys.exit(1)
+            raise e
         logging.info('All done - terminating')
 
     def _get_configuration(self) -> dict:
-        try:
-            with open(self.args.conf_path) as c_file:
-                return json.load(c_file)
-        except FileNotFoundError:
-            sys.stderr.write('Configuration file not found: "{}".'.format(self.args.conf_path))
-            sys.exit(1)
-        except ValueError as e:
-            sys.stderr.write('Configuration file "{}" is not a valid JSON document: {}'.format(
-                self.args.conf_path, str(e)))
-            sys.exit(1)
+        with open(self.args.conf_path) as c_file:
+            return json.load(c_file)
 
     @staticmethod
     def _validate_configuration(raw_conf: dict) -> dict:
@@ -126,7 +120,6 @@ class Application:
         logging.debug('Logger initiated')
 
     def _command_run(self):
-        logging.info('Starting "run" command...')
         rules_provider = get_rules_provider_class(self.args.rules_provider)()
         rules_set = rules_provider.get_rules(self.args.rules_set)
         if not rules_set:
@@ -136,6 +129,9 @@ class Application:
         logging.debug('Rules set ready')
         logging.debug('Starting dispatcher...')
         get_dispatcher_class(self.args.dispatcher)(rules_set).dispatch()
+
+    def _command_version(self):
+        sys.stdout.write(VERSION)
 
 
 """
