@@ -1,5 +1,14 @@
 import argparse
 
+useindirasroot = (
+    ('-ir', '--useindirasroot'),
+    {
+        'help': 'if input URL is a directory use out_dir/input_dir instead of out_dir only as output root',
+        'dest': 'use_in_dir_as_root',
+        'action': 'store_true'
+    }
+)
+
 args_parser = argparse.ArgumentParser()
 args_parser.add_argument(
     '-v', '--verbosity',
@@ -63,10 +72,8 @@ parser_run.add_argument(
     default='json'
 )
 parser_run.add_argument(
-    '-ir', '--useindirasroot',
-    help='if input URL is a directory use out_dir/input_dir instead of out_dir only as output root',
-    dest='use_in_dir_as_root',
-    action='store_true'
+    *useindirasroot[0],
+    **useindirasroot[1]
 )
 parser_run.add_argument(
     '-dd', '--dirdepth',
@@ -77,3 +84,25 @@ parser_run.add_argument(
 )
 
 parser_version = subparsers.add_parser('version')
+
+parser_convert = subparsers.add_parser('convert')
+parser_convert.add_argument(
+    'input_url',
+    help='input URL',
+    type=str
+)
+parser_convert.add_argument(
+    'profile',
+    help='Conversion profile\'s name',
+    type=str
+)
+parser_run.add_argument(
+    '-cv', '--converter',
+    help='converter module name',
+    type=str,
+    default='basic'
+)
+parser_convert.add_argument(
+    *useindirasroot[0],
+    **useindirasroot[1]
+)

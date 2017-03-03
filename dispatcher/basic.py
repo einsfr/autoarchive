@@ -10,7 +10,7 @@ import pprint
 from action import get_action_class
 from pattern_filter import get_pattern_filter_class
 from dispatcher import PolicyViolationException, ActionRunException, UnknownPolicyException
-from application import app
+from utils.file_list import build_file_list
 
 
 class BasicDispatcher:
@@ -21,21 +21,27 @@ class BasicDispatcher:
     типа действия - поэтому используется внутренный кэш для сохранения подобных объектов. Та же ситуация и с фильтрами.
     """
 
-    def __init__(self, rules_set: dict):
+    def __init__(self, input_url: str, rules_set: dict, conf_out_dir: str, dir_depth: int, use_in_dir_as_root: bool,
+                 simulate: bool):
         """
 
         Args:
             rules_set: Набор правил для обработки
+            input_url: Входной URL
+            conf_out_dir: Корневая выходная папка
+            dir_depth: Глубина дерева выходных папок
+            use_in_dir_as_root: Использовать ли входную папку (если URL - папка) в качестве корня для выхода
+            simulate: Если это симуляция - никаких реальных изменений происходить не будет
         """
 
         self._policy = rules_set['policy']
         self._no_match_files = []
-        self._conf_out_dir = app.conf['out_dir']
-        self._dir_depth = app.args.dir_depth
-        self._use_in_dir_as_root = app.args.use_in_dir_as_root
-        self._simulate = app.args.simulate
+        self._conf_out_dir = conf_out_dir
+        self._dir_depth = dir_depth
+        self._use_in_dir_as_root = use_in_dir_as_root
+        self._simulate = simulate
 
-        self._input_url = os.path.abspath(app.args.input_url)
+        self._input_url = os.path.abspath(input_url)
         self._input_is_a_file = os.path.isfile(self._input_url)
         self._input_is_a_dir = os.path.isdir(self._input_url)
 
@@ -73,12 +79,7 @@ class BasicDispatcher:
             self._file_count = 1
         elif self._input_is_a_dir:
             self._input_base_dir = self._input_url
-            logging.debug('Building file list...')
-            for path, dirs, files in os.walk(self._input_url):
-                if len(files):
-                    self._dir_list.append({'rel_in_dir': path[len(self._input_url) + 1:], 'files': files})
-                    self._file_count += len(files)
-            logging.debug('Found {} files(s) in {} directory(ies)'.format(self._file_count, len(self._dir_list)))
+            self._dir_list, self._file_count = build_file_list(self._input_url)
         else:
             raise ValueError('Basic dispatcher supports only files and directories as input')
 

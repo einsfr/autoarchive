@@ -8,8 +8,9 @@ from traceback import TracebackException
 
 from rules_provider import get_rules_provider_class
 from dispatcher import get_dispatcher_class
+from converter import get_converter_class
 
-VERSION = '0.1'
+VERSION = '0.2'
 
 
 class ConfigurationException(Exception):
@@ -128,13 +129,17 @@ class Application:
             raise TypeError('Rules set must be a dictionary')
         logging.debug('Rules set ready')
         logging.debug('Starting dispatcher...')
-        get_dispatcher_class(self.args.dispatcher)(rules_set).dispatch()
+        get_dispatcher_class(self.args.dispatcher)(
+            self.args.input_url, rules_set, self.conf['out_dir'], self.args.dir_depth, self.args.use_in_dir_as_root,
+            self.args.simulate
+        ).dispatch()
 
     def _command_version(self):
         sys.stdout.write(VERSION)
 
-
-"""
-:type Application
-"""
-app = None
+    def _command_convert(self):
+        logging.debug('Starting converter...')
+        get_converter_class(self.args.converter)(
+            self.args.input_url, self.args.profile, self.conf['out_dir'], self.args.use_in_dir_as_root,
+            self.args.simulate
+        ).convert()
