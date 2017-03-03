@@ -9,6 +9,16 @@ useindirasroot = (
     }
 )
 
+dirdepth = (
+    ('-dd', '--dirdepth'),
+    {
+        'dest': 'dir_depth',
+        'help': 'output directory tree depth',
+        'type': int,
+        'default': 0
+    }
+)
+
 args_parser = argparse.ArgumentParser()
 args_parser.add_argument(
     '-v', '--verbosity',
@@ -76,11 +86,8 @@ parser_run.add_argument(
     **useindirasroot[1]
 )
 parser_run.add_argument(
-    '-dd', '--dirdepth',
-    dest='dir_depth',
-    help='output directory tree depth',
-    type=int,
-    default=0
+    *dirdepth[0],
+    **dirdepth[1]
 )
 
 parser_version = subparsers.add_parser('version')
@@ -96,7 +103,7 @@ parser_convert.add_argument(
     help='Conversion profile\'s name',
     type=str
 )
-parser_run.add_argument(
+parser_convert.add_argument(
     '-cv', '--converter',
     help='converter module name',
     type=str,
@@ -105,4 +112,8 @@ parser_run.add_argument(
 parser_convert.add_argument(
     *useindirasroot[0],
     **useindirasroot[1]
+)
+parser_convert.add_argument(
+    *dirdepth[0],
+    **dirdepth[1]
 )
