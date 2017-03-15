@@ -159,7 +159,9 @@ class BasicDispatcher:
             logging.debug('Building output directory path...')
             rel_out_dir_list = []
             if self._input_is_a_dir and self._use_in_dir_as_root:
-                rel_out_dir_list.append(self._input_base_dir)
+                dir_name = os.path.split(self._input_base_dir)[1]
+                if dir_name:
+                    rel_out_dir_list.append(dir_name)
             if 'out_dir' in action_params and action_params['out_dir']:
                 rel_out_dir_list.append(action_params['out_dir'])
 
