@@ -19,7 +19,7 @@
       "dir_depth": 2
     }],
 
-    ["^__HQ__.*\\.(?:docx|doc)$", {}, "copy", {
+    ["^__HQ__.*\\.(?:docx|doc|mov|jpeg|cr2|wav|mts|mp4|jpg)$", {}, "copy", {
       "dir_depth": 2
     }],
 
@@ -49,6 +49,6 @@
       "profile": "x264_itff_422.json"
     }],
 
-    [".*\\.(?:xml|smi|ppn|bim|db|xmp)$", {}, "skip", {}]
+    [".*\\.(?:xml|smi|ppn|bim|db|xmp|ctg|cpi|mpl|bdm|tdt|tid)$", {}, "skip", {}]
   ]
 }
