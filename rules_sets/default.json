@@ -19,6 +19,26 @@
       "dir_depth": 2
     }],
 
+    [
+      "^__HQ__.*\\d{5}.mts",
+      {
+        "filters": {
+          "ffprobe.meta": {
+            "stream:v:0": {
+              "field_mode": 1
+            },
+            "count:v": 1,
+            "count:a": 1
+          }
+        }
+      },
+      "ffmpeg.convert",
+      {
+        "profile": "x264_itff_422_audio_copy.json",
+        "dir_depth": 2
+      }
+    ],
+
     ["^__HQ__.*\\.(?:docx|doc|mov|jpeg|cr2|wav|mts|mp4|jpg)$", {}, "copy", {
       "dir_depth": 2
     }],
@@ -40,6 +60,26 @@
       "profile": "x264_540itff_420_amix.json",
       "dir_depth": 2
     }],
+
+    [
+      "^__LQ__.*\\d{5}.mts",
+      {
+        "filters": {
+          "ffprobe.meta": {
+            "stream:v:0": {
+              "field_mode": 1
+            },
+            "count:v": 1,
+            "count:a": 1
+          }
+        }
+      },
+      "ffmpeg.convert",
+      {
+        "profile": "x264_540itff_420_audio_copy.json",
+        "dir_depth": 2
+      }
+    ],
 
     ["^__LQ__.*\\.(?:docx|doc)$", {}, "copy", {
       "dir_depth": 2
