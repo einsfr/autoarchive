@@ -17,6 +17,10 @@ class CopyAction(OutDirCreatingAction):
     def run(self, input_url: str, action_params: dict, out_dir_path: str, simulate: bool) -> None:
         super().run(input_url, action_params, out_dir_path, simulate)
         out_path = os.path.join(out_dir_path, os.path.split(input_url)[1])
+        if os.path.exists(out_path):
+            msg = 'Output file "{}" already exists'.format(out_path)
+            logging.error(msg)
+            raise FileExistsError(msg)
         logging.info('Copying file from "{}" to "{}"...'.format(input_url, out_path))
         if not simulate:
             shutil.copy(input_url, out_path)
