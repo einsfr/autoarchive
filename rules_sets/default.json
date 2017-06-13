@@ -39,7 +39,7 @@
       }
     ],
 
-    ["^__HQ__.*\\.(?:docx|doc|mov|jpeg|cr2|wav|mts|mp4|jpg)$", {}, "copy", {
+    ["^__HQ__.*\\.(?:docx|doc|mov|jpeg|cr2|wav|jpg)$", {}, "copy", {
       "dir_depth": 2
     }],
 
