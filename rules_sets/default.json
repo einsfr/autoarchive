@@ -1,6 +1,7 @@
 {
   "policy": "warning",
   "patterns": [
+
     ["^__HQ__.*\\d{3}_\\d{4}_\\d{2}\\.mp4$", {
       "filters": {
         "ffprobe.meta": {
@@ -13,14 +14,34 @@
             "bit_rate": ["gte", 20000000]
           }
         }
-      }
+      },
+      "passthrough": false
     }, "ffmpeg.convert", {
       "profile": "x264_itff_422_amix+aac_audio.json",
       "dir_depth": 2
     }],
 
     [
-      "^__HQ__.*\\d{5}.mts",
+      "^__HQ__.*\\.mp4$",
+      {
+        "filters": {
+          "ffprobe.meta": {
+            "format": {
+              "bit_rate": ["gte", 15000000]
+            }
+          }
+        },
+        "passthrough": false
+      },
+      "ffmpeg.convert",
+      {
+        "profile": "x264.json",
+        "dir_depth": 2
+      }
+    ],
+
+    [
+      "^__HQ__.*\\d{5}\\.mts$",
       {
         "filters": {
           "ffprobe.meta": {
@@ -34,14 +55,26 @@
       },
       "ffmpeg.convert",
       {
-        "profile": "x264_itff_422_audio_copy.json",
+        "profile": "x264.json",
         "dir_depth": 2
       }
     ],
 
-    ["^__HQ__.*\\.(?:docx|doc|mov|jpeg|cr2|wav|jpg)$", {}, "copy", {
+    [
+      "^__HQ__.*\\.m2t",
+      {},
+      "ffmpeg.convert",
+      {
+        "profile": "x264.json",
+        "dir_depth": 2
+      }
+    ],
+
+    ["^__HQ__.*\\.(?:docx|doc|mov|jpeg|cr2|wav|jpg|mp3|mp4)$", {}, "copy", {
       "dir_depth": 2
     }],
+
+    ["^__HQ__.*\\.(?:dat|b00|d00|tbl|frm)$", {}, "skip", {}],
 
     ["^__LQ__.*\\d{3}_\\d{4}_\\d{2}\\.mp4$", {
       "filters": {
@@ -76,7 +109,7 @@
       },
       "ffmpeg.convert",
       {
-        "profile": "x264_540itff_420_audio_copy.json",
+        "profile": "x264_540.json",
         "dir_depth": 2
       }
     ],

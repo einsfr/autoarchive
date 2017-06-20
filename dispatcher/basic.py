@@ -95,7 +95,19 @@ class BasicDispatcher:
                 except PolicyViolationException as e:
                     raise e
                 except ActionRunException as e:
-                    processed_errors.append((rel_in_path, e))
+                    level = 0
+                    exceptions_chain = []
+                    while True:
+                        exceptions_chain.append('{spaces}{type}: {message}'.format(
+                            spaces=' ' * 2 * level,
+                            type=type(e),
+                            message=str(e),
+                        ))
+                        level += 1
+                        if e.__cause__ is None:
+                            break
+                        e = e.__cause__
+                    processed_errors.append((rel_in_path, '\r\n'.join(exceptions_chain)))
                 processed_files_count += 1
         if self._no_match_files and self._policy == 'warning':
             logging.warning(
@@ -106,9 +118,9 @@ class BasicDispatcher:
             )
         errors_count = len(processed_errors)
         if errors_count:
-            logging.warning('Finished with {} error(s):\r\n{}'.format(
+            logging.warning('Finished with {} error(s):\r\n\r\n{}'.format(
                 errors_count,
-                '\r\n'.join(['{}: {} {}'.format(pe[0], type(pe[1]), str(pe[1])) for pe in processed_errors])
+                '\r\n'.join(['{}:\r\n{}\r\n'.format(pe[0], pe[1]) for pe in processed_errors])
             ))
         else:
             logging.info('Finished without errors')
