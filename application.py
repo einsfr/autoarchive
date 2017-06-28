@@ -140,6 +140,6 @@ class Application:
     def _command_convert(self):
         logging.debug('Starting converter...')
         get_converter_class(self.args.converter)(
-            self.args.input_url, self.args.profile, self.conf['out_dir'], self.args.dir_depth,
+            self.args.input_url, self.args.profile, self.args.profilevar, self.conf['out_dir'], self.args.dir_depth,
             self.args.use_in_dir_as_root, self.args.simulate
         ).convert()

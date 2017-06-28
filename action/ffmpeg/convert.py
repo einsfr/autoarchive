@@ -27,9 +27,14 @@ class FfmpegConvertAction(OutDirCreatingAction):
 
     def run(self, input_url: str, action_params: dict, out_dir_path: str, simulate: bool) -> None:
         super().run(input_url, action_params, out_dir_path, simulate)
-        profile = profile_loader.profile_loader.get_profile(action_params['profile'], context={
-            'input': self._ffprobe_meta_collector.get_metadata(input_url)
-        })
+        input_metadata = self._ffprobe_meta_collector.get_metadata(input_url)
+        logging.debug('Input metadata: {}'.format(input_metadata))
+        context = {
+            'input': input_metadata,
+            'vars': action_params['profile_vars'] if 'profile_vars' in action_params else {}
+        }
+        logging.debug('Profile rendering context: \r\n{}'.format(context))
+        profile = profile_loader.profile_loader.get_profile(action_params['profile'], context=context)
         logging.debug('Starting FFmpeg conversion...')
         try:
             self._ffmpeg_convert.exec(

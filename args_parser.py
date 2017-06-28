@@ -109,6 +109,22 @@ parser_convert.add_argument(
     type=str,
     default='basic'
 )
+
+
+def _convert_profilevar(value: str):
+    splitted_value = value.split('=', 1)
+    if len(splitted_value) == 1:
+        return splitted_value, None
+    else:
+        return splitted_value
+
+parser_convert.add_argument(
+    '-pv', '--profilevar',
+    help='profile variables',
+    action='append',
+    type=_convert_profilevar,
+)
+
 parser_convert.add_argument(
     *useindirasroot[0],
     **useindirasroot[1]
