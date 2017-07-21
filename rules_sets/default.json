@@ -122,6 +122,6 @@
       "profile": "x264_itff_422.json"
     }],
 
-    [".*\\.(?:xml|smi|ppn|bim|db|xmp|ctg|cpi|mpl|bdm|tdt|tid)$", {}, "skip", {}]
+    [".*\\.(?:xml|smi|ppn|bim|db|xmp|ctg|cpi|mpl|bdm|tdt|tid|thm|mrk)$", {}, "skip", {}]
   ]
 }
