@@ -88,7 +88,8 @@
             "bit_rate": ["gte", 20000000]
           }
         }
-      }
+      },
+      "passthrough": false
     }, "ffmpeg.convert", {
       "profile": "x264_540itff_420_amix.json",
       "dir_depth": 2
@@ -113,6 +114,15 @@
         "dir_depth": 2
       }
     ],
+
+    ["^__LQ__.*\\.(?:mp4|mov)$", {}, "ffmpeg.convert", {
+      "profile": "x264.json",
+      "dir_depth": 2,
+      "profile_vars": {
+        "crf": 24,
+        "scale": "w=-1:h=540"
+      }
+    }],
 
     ["^__LQ__.*\\.(?:docx|doc)$", {}, "copy", {
       "dir_depth": 2
