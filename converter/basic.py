@@ -9,7 +9,10 @@ class BasicConverter:
             input_url,
             {
                 'policy': 'error',
-                'patterns': [['.*', {}, 'ffmpeg.convert', {'profile': profile, 'profile_vars': dict(profile_vars)}]],
+                'patterns': [['.*', {}, 'ffmpeg.convert', {
+                    'profile': profile,
+                    'profile_vars': dict(profile_vars) if profile_vars else dict()
+                }]],
             },
             conf_out_dir, dir_depth, use_in_dir_as_root, simulate
         )
