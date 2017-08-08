@@ -70,11 +70,11 @@
       }
     ],
 
-    ["^__HQ__.*\\.(?:docx|doc|mov|jpeg|cr2|wav|jpg|mp3|mp4)$", {}, "copy", {
+    ["^__HQ__.*\\.(?:docx|doc|mov|jpeg|cr2|wav|jpg|mp3|mp4|pdf|pptx)$", {}, "copy", {
       "dir_depth": 2
     }],
 
-    ["^__HQ__.*\\.(?:dat|b00|d00|tbl|frm)$", {}, "skip", {}],
+    ["^__HQ__.*\\.(?:dat|b00|d00|tbl|frm|hprj|pptm|txt)$", {}, "skip", {}],
 
     ["^__LQ__.*\\d{3}_\\d{4}_\\d{2}\\.mp4$", {
       "filters": {
