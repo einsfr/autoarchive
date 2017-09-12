@@ -206,12 +206,15 @@ class BasicDispatcher:
             logging.debug('Fetching action object...')
             action = self._get_action(action_id)
             logging.debug('Using action object {}'.format(action))
-            action.run(
-                abs_in_path,
-                action_params,
-                out_dir,
-                self._simulate
-            )
+            try:
+                action.run(
+                    abs_in_path,
+                    action_params,
+                    out_dir,
+                    self._simulate
+                )
+            except FileExistsError:
+                logging.warning('Output file already exists - skipping')
 
     def _get_matching_patterns(self, in_path: str) -> list:
         """ Поиск правил, соответствующих пути в `in_path`
