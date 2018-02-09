@@ -9,7 +9,7 @@ import pprint
 
 from action import get_action_class
 from pattern_filter import get_pattern_filter_class
-from dispatcher import PolicyViolationException, ActionRunException, UnknownPolicyException
+from dispatcher import PolicyViolationException, UnknownPolicyException
 from utils.file_list import build_file_list
 
 
@@ -94,20 +94,25 @@ class BasicDispatcher:
                     self._dispatch(d['rel_in_dir'], rel_in_path)
                 except PolicyViolationException as e:
                     raise e
-                except ActionRunException as e:
-                    level = 0
-                    exceptions_chain = []
-                    while True:
-                        exceptions_chain.append('{spaces}{type}: {message}'.format(
-                            spaces=' ' * 2 * level,
-                            type=type(e),
-                            message=str(e),
-                        ))
-                        level += 1
-                        if e.__cause__ is None:
-                            break
-                        e = e.__cause__
-                    processed_errors.append((rel_in_path, '\r\n'.join(exceptions_chain)))
+                except Exception as e:
+                    if self._policy == 'error':
+                        raise e
+                    elif self._policy == 'warning':
+                        level = 0
+                        exceptions_chain = []
+                        while True:
+                            exceptions_chain.append('{spaces}{type}: {message}'.format(
+                                spaces=' ' * 2 * level,
+                                type=type(e),
+                                message=str(e),
+                            ))
+                            level += 1
+                            if e.__cause__ is None:
+                                break
+                            e = e.__cause__
+                        processed_errors.append((rel_in_path, '\r\n'.join(exceptions_chain)))
+                    elif self._policy != 'skip':
+                        raise UnknownPolicyException(self._policy)
                 processed_files_count += 1
         if self._no_match_files and self._policy == 'warning':
             logging.warning(
